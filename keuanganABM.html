@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Keuangan Air Bersih Mauluddaras</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-database-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f4f7fc;
+        }
+        .sidebar {
+            height: 100vh;
+            width: 250px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background: linear-gradient(180deg, #0a3d62, #1a6b8a);
+            padding-top: 20px;
+            color: white;
+            z-index: 1000;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+            overflow-y: auto;
+        }
+        .sidebar .brand {
+            text-align: center;
+            padding: 15px 0 25px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .sidebar .brand h4 {
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        .sidebar .brand small {
+            opacity: 0.7;
+            font-size: 12px;
+        }
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 12px 25px;
+            margin: 4px 10px;
+            border-radius: 8px;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+        .sidebar .nav-link i {
+            width: 25px;
+        }
+        .main-content {
+            margin-left: 250px;
+            padding: 20px 30px;
+        }
+        .topbar {
+            background: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            border-left: 5px solid #1a6b8a;
+            transition: 0.2s;
+        }
+        .stat-card .number {
+            font-size: 28px;
+            font-weight: 700;
+            color: #0a3d62;
+        }
+        .stat-card .label {
+            color: #6c757d;
+            font-size: 14px;
+        }
+        .page-content {
+            display: none;
+        }
+        .page-content.active {
+            display: block;
+        }
+        .table th {
+            background: #e9f0f5;
+        }
+        .customer-view {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            border-top: 4px solid #28a745;
+        }
+        .btn-sm {
+            margin-right: 4px;
+        }
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+        .chart-legend {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        .legend-box {
+            width: 18px;
+            height: 4px;
+            border-radius: 2px;
+            display: inline-block;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 60px;
+            }
+            .sidebar .brand h4,
+            .sidebar .brand small,
+            .sidebar .nav-link span {
+                display: none;
+            }
+            .sidebar .nav-link {
+                text-align: center;
+                padding: 12px;
+            }
+            .main-content {
+                margin-left: 60px;
+                padding: 15px;
+            }
+        }
+        .line-chart-container {
+            position: relative;
+            width: 100%;
+            height: 220px;
+        }
+        .line-chart-container svg {
+            width: 100%;
+            height: 100%;
+        }
+        .line-chart-container .axis-label {
+            font-size: 10px;
+            fill: #6c757d;
+            text-anchor: middle;
+        }
+        .line-chart-container .grid-line {
+            stroke: #e9ecef;
+            stroke-width: 0.5;
+        }
+        .login-box {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        .customer-info-box {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TOAST -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <div class="brand">
+            <i class="fas fa-water fa-2x mb-2" style="color: #6bcbff;"></i>
+            <h4>Air Bersih Mauluddaras</h4>
+            <small>Manajemen Keuangan</small>
+        </div>
+        <nav class="nav flex-column mt-3">
+            <a class="nav-link active" data-page="dashboard"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a>
+            <a class="nav-link" data-page="pelanggan"><i class="fas fa-users"></i> <span>Pelanggan</span></a>
+            <a class="nav-link" data-page="tagihan"><i class="fas fa-file-invoice"></i> <span>Tagihan</span></a>
+            <a class="nav-link" data-page="penggajian"><i class="fas fa-wallet"></i> <span>Penggajian</span></a>
+            <a class="nav-link" data-page="akses-pelanggan"><i class="fas fa-user-check"></i> <span>Akses Pelanggan</span></a>
+            <hr style="border-color:rgba(255,255,255,0.1); margin: 20px 10px;" />
+            <a class="nav-link text-danger" id="resetDataBtn"><i class="fas fa-database"></i> <span>Reset Data</span></a>
+        </nav>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main-content">
+        <div class="topbar">
+            <h5 class="m-0"><i class="fas fa-tint text-primary me-2"></i> Panel Admin</h5>
+            <div>
+                <span class="badge bg-success me-2"><i class="fas fa-circle"></i> Online</span>
+                <span><i class="fas fa-user-circle fa-2x text-secondary"></i> Admin</span>
+            </div>
+        </div>
+
+        <!-- DASHBOARD -->
+        <div id="page-dashboard" class="page-content active">
+            <div class="row g-4" id="dashboardStats">
+                <div class="col-md-3">
+                    <div class="stat-card"><div class="number" id="statPelanggan">0</div><div class="label">Total Pelanggan Aktif</div></div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card" style="border-left-color:#28a745;"><div class="number" id="statPendapatan">Rp 0</div><div class="label">Pendapatan Bulan Ini</div></div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card" style="border-left-color:#dc3545;"><div class="number" id="statTertunggak">0</div><div class="label">Tagihan Tertunggak</div></div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card" style="border-left-color:#ffc107;"><div class="number" id="statKaryawan">0</div><div class="label">Karyawan Aktif</div></div>
+                </div>
+            </div>
+            <div class="row mt-4">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center">
+                            <span>📈 Pendapatan vs Pengeluaran (6 Bulan Terakhir)</span>
+                            <div class="chart-legend">
+                                <span><span class="legend-box" style="background:#0a3d62;"></span> Pendapatan</span>
+                                <span><span class="legend-box" style="background:#dc3545;"></span> Pengeluaran (Gaji)</span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="line-chart-container" id="chartContainer"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header bg-white fw-bold">⚡ Status Sumur</div>
+                        <div class="card-body">
+                            <p><i class="fas fa-circle text-success"></i> Sumur 1: <strong>Beroperasi</strong> (2.5 m³/jam)</p>
+                            <p><i class="fas fa-circle text-warning"></i> Sumur 2: <strong>Perawatan</strong></p>
+                            <p><i class="fas fa-circle text-success"></i> Sumur 3: <strong>Beroperasi</strong> (1.8 m³/jam)</p>
+                            <hr /><p class="text-muted small">Total Debit: 4.3 m³/jam</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PELANGGAN -->
+        <div id="page-pelanggan" class="page-content">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5><i class="fas fa-users me-2"></i>Daftar Pelanggan</h5>
+                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalPelanggan"><i class="fas fa-plus"></i> Tambah</button>
+            </div>
+            <div class="card">
+                <div class="card-body p-0">
+                    <table class="table table-hover table-striped m-0">
+                        <thead><tr><th>No Samb</th><th>Nama</th><th>Alamat</th><th>No Telp</th><th>Status</th><th>Aksi</th></tr></thead>
+                        <tbody id="tbodyPelanggan"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="mt-2 text-muted small"><i class="fas fa-info-circle"></i> Klik <strong>Nonaktifkan/Aktifkan</strong> untuk mengubah status.</div>
+        </div>
+
+        <!-- TAGIHAN -->
+        <div id="page-tagihan" class="page-content">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5><i class="fas fa-file-invoice me-2"></i>Tagihan &amp; Pembayaran</h5>
+                <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalTambahTagihan"><i class="fas fa-plus"></i> Tambah Tagihan</button>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header bg-white fw-bold">📋 Tagihan Belum Lunas</div>
+                        <div class="card-body p-0">
+                            <table class="table table-sm m-0">
+                                <thead><tr><th>Pelanggan</th><th>Periode</th><th>Pemakaian (m³)</th><th>Tarif/m³</th><th>Total</th><th>Status</th><th>Aksi</th></tr></thead>
+                                <tbody id="tbodyTagihanBelum"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header bg-white fw-bold">✅ Riwayat Pembayaran</div>
+                        <div class="card-body p-0">
+                            <table class="table table-sm m-0">
+                                <thead><tr><th>Pelanggan</th><th>Periode</th><th>Pemakaian (m³)</th><th>Jumlah Dibayar</th><th>Metode</th><th>Tgl Bayar</th></tr></thead>
+                                <tbody id="tbodyRiwayatBayar"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PENGGAJIAN -->
+        <div id="page-penggajian" class="page-content">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5><i class="fas fa-wallet me-2"></i>Penggajian Karyawan</h5>
+                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalKaryawan"><i class="fas fa-plus"></i> Tambah Karyawan</button>
+            </div>
+            <div class="card">
+                <div class="card-body p-0">
+                    <table class="table table-hover m-0">
+                        <thead><tr><th>Nama</th><th>Jabatan</th><th>Gaji Pokok</th><th>Tunjangan</th><th>Potongan</th><th>Gaji Bersih</th><th>Status</th><th>Aksi</th></tr></thead>
+                        <tbody id="tbodyKaryawan"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="mt-2" id="totalGajiDisplay"></div>
+        </div>
+
+        <!-- AKSES PELANGGAN -->
+        <div id="page-akses-pelanggan" class="page-content">
+            <div class="customer-view">
+                <h4 class="mb-3"><i class="fas fa-user-lock me-2"></i> Akses Pelanggan</h4>
+                <div id="customerLoginArea">
+                    <div class="login-box">
+                        <div class="mb-3">
+                            <label for="inputNoSamb" class="form-label">Masukkan Nomor Sambungan</label>
+                            <input type="text" class="form-control" id="inputNoSamb" placeholder="Contoh: SB-001" />
+                        </div>
+                        <button class="btn btn-primary w-100" id="btnLoginPelanggan"><i class="fas fa-sign-in-alt"></i> Lihat Data</button>
+                    </div>
+                    <div id="customerInfoArea" style="display: none; margin-top: 20px;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5>Informasi Pelanggan</h5>
+                            <button class="btn btn-outline-secondary btn-sm" id="btnLogoutPelanggan"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                        </div>
+                        <div class="customer-info-box" id="customerDetail"></div>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="card border-primary">
+                                    <div class="card-header bg-primary text-white">📌 Tagihan Bulan Ini</div>
+                                    <div class="card-body" id="custTagihanDetail">Silakan login terlebih dahulu.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header bg-light">📜 Riwayat Pembayaran</div>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm m-0">
+                                            <thead><tr><th>Periode</th><th>Pemakaian</th><th>Jumlah</th><th>Status</th></tr></thead>
+                                            <tbody id="custRiwayatTable"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MODAL ===== -->
+
+    <!-- Modal Pelanggan -->
+    <div class="modal fade" id="modalPelanggan" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h5 id="modalPelangganTitle">Tambah Pelanggan</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <input type="hidden" id="editPelangganId" />
+                    <div class="mb-2"><label>No Sambungan</label><input class="form-control" id="inpNoSamb" placeholder="Kosongkan untuk otomatis" /></div>
+                    <div class="mb-2"><label>Nama</label><input class="form-control" id="inpNama" /></div>
+                    <div class="mb-2"><label>Alamat</label><input class="form-control" id="inpAlamat" /></div>
+                    <div class="mb-2"><label>No Telp</label><input class="form-control" id="inpTelp" /></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                    <button class="btn btn-primary" id="btnSimpanPelanggan">Simpan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Tambah Tagihan -->
+    <div class="modal fade" id="modalTambahTagihan" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h5>Tambah Tagihan Baru</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="mb-2"><label>Pelanggan</label><select class="form-select" id="inpTagihanPelanggan"><option value="">-- Pilih Pelanggan --</option></select></div>
+                    <div class="mb-2"><label>Periode (Bulan-Tahun)</label><input type="month" class="form-control" id="inpTagihanPeriode" /></div>
+                    <div class="mb-2"><label>Pemakaian (m³)</label><input type="number" class="form-control" id="inpTagihanPemakaian" step="0.1" placeholder="Contoh: 12.5" /></div>
+                    <div class="mb-2"><label>Tarif per m³ (Rp)</label><input type="number" class="form-control" id="inpTagihanTarif" value="10000" step="1000" /></div>
+                    <div class="mb-2"><label>Total Tagihan (Rp)</label><input type="text" class="form-control" id="inpTagihanTotal" readonly style="background:#e9ecef;" /></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button class="btn btn-success" id="btnSimpanTagihan">Simpan Tagihan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Karyawan -->
+    <div class="modal fade" id="modalKaryawan" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h5 id="modalKaryawanTitle">Tambah Karyawan</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <input type="hidden" id="editKaryawanId" />
+                    <div class="mb-2"><label>Nama</label><input class="form-control" id="inpKNama" /></div>
+                    <div class="mb-2"><label>Jabatan</label><input class="form-control" id="inpKJabatan" /></div>
+                    <div class="mb-2"><label>Gaji Pokok</label><input class="form-control" type="number" id="inpKGaji" /></div>
+                    <div class="mb-2"><label>Tunjangan</label><input class="form-control" type="number" id="inpKTunjangan" value="0" /></div>
+                    <div class="mb-2"><label>Potongan</label><input class="form-control" type="number" id="inpKPotongan" value="0" /></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                    <button class="btn btn-primary" id="btnSimpanKaryawan">Simpan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Bayar -->
+    <div class="modal fade" id="modalBayar" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h5>Bayar Tagihan</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <input type="hidden" id="bayarTagihanId" />
+                    <p>Bayar tagihan untuk: <strong id="bayarNamaPelanggan"></strong></p>
+                    <p>Total Tagihan: <strong id="bayarTotalTagihan"></strong></p>
+                    <div class="mb-2"><label>Jumlah yang Dibayarkan</label><input type="number" class="form-control" id="bayarJumlahInput" step="1000" /></div>
+                    <div class="mb-2"><label>Metode Pembayaran</label><select class="form-select" id="bayarMetode"><option value="Tunai">Tunai</option><option value="Transfer">Transfer</option><option value="QRIS">QRIS</option></select></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button class="btn btn-success" id="btnKonfirmasiBayar">Konfirmasi Bayar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Update Status Gaji -->
+    <div class="modal fade" id="modalUpdateGaji" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h5>Update Status Gaji</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <input type="hidden" id="editGajiId" />
+                    <p>Update status gaji untuk: <strong id="editGajiNama"></strong></p>
+                    <div class="mb-2"><label>Status</label><select class="form-select" id="editGajiStatus"><option value="Belum Bayar">Belum Bayar</option><option value="Proses">Proses</option><option value="Lunas">Lunas</option></select></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button class="btn btn-primary" id="btnSimpanUpdateGaji">Simpan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
+    </script>
+    <script>
+        // ============================================================
+        // 0. KONFIGURASI FIREBASE (GANTI DENGAN MILIK ANDA)
+        // ============================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyA5KVUjC-KoBhhbxh2JJA-2iJ64oHUrJoA",
+            authDomain: "mauluddaras-air.firebaseapp.com",
+            databaseURL: "https://mauluddaras-air-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "mauluddaras-air",
+            storageBucket: "mauluddaras-air.firebasestorage.app",
+            messagingSenderId: "464693587317",
+            appId: "1:464693587317:web:d0b8e7448014e5b6c9373c",
+            measurementId: "G-WVEK3VXZ19"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // ============================================================
+        // 1. DATA LAYER (Realtime Database)
+        // ============================================================
+        let appData = { customers: [], payments: [], employees: [], expenses: [] };
+
+        async function loadData() {
+            try {
+                const snapshot = await db.ref('/').once('value');
+                const data = snapshot.val();
+                if (data) {
+                    appData.customers = data.customers || [];
+                    appData.payments = data.payments || [];
+                    appData.employees = data.employees || [];
+                    appData.expenses = data.expenses || [];
+                } else {
+                    // Jika kosong, set default
+                    appData = getDefaultData();
+                    await saveData();
+                }
+                renderAll();
+            } catch (e) {
+                console.error('Gagal load data:', e);
+                showToast('Gagal mengambil data dari server!', 'danger');
+            }
+        }
+
+        async function saveData() {
+            try {
+                await db.ref('/').set({
+                    customers: appData.customers,
+                    payments: appData.payments,
+                    employees: appData.employees,
+                    expenses: appData.expenses
+                });
+                showToast('Data berhasil disimpan ke cloud!');
+                renderAll();
+            } catch (e) {
+                console.error('Gagal simpan data:', e);
+                showToast('Gagal menyimpan data!', 'danger');
+            }
+        }
+
+        function getDefaultData() {
+            const months = [];
+            const now = new Date();
+            for (let i = 5; i >= 0; i--) {
+                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                months.push(d.toISOString().slice(0, 7));
+            }
+            const baseExpense = 11600000;
+            const expenses = months.map(m => ({ bulan: m, total: baseExpense + (Math.random() * 2000000 - 1000000) }));
+            return {
+                customers: [
+                    { id: 1, no_sambungan: 'SB-001', nama: 'Budi Santoso', alamat: 'Jl. Mawar No.12', telp: '0812-3456-7890',
+                        status: 'aktif' },
+                    { id: 2, no_sambungan: 'SB-002', nama: 'Siti Rahayu', alamat: 'Jl. Melati No.5', telp: '0813-2222-3333',
+                        status: 'aktif' },
+                    { id: 3, no_sambungan: 'SB-003', nama: 'Agus Wijaya', alamat: 'Jl. Kenanga Blok C',
+                        telp: '0856-1111-2222', status: 'nonaktif' },
+                    { id: 4, no_sambungan: 'SB-004', nama: 'Dewi Lestari', alamat: 'Jl. Anggrek No.8',
+                        telp: '0821-9999-8888', status: 'aktif' }
+                ],
+                payments: [
+                    { id: 1, customer_id: 1, periode: '2026-06', pemakaian: 12.5, tarif: 10000, jumlah: 125000,
+                        tgl_bayar: null, metode: null, status: 'belum' },
+                    { id: 2, customer_id: 2, periode: '2026-06', pemakaian: 11.0, tarif: 10000, jumlah: 110000,
+                        tgl_bayar: null, metode: null, status: 'belum' },
+                    { id: 3, customer_id: 4, periode: '2026-06', pemakaian: 13.5, tarif: 10000, jumlah: 135000,
+                        tgl_bayar: '2026-06-25', metode: 'QRIS', status: 'lunas' },
+                    { id: 4, customer_id: 1, periode: '2026-05', pemakaian: 12.0, tarif: 10000, jumlah: 120000,
+                        tgl_bayar: '2026-05-20', metode: 'Tunai', status: 'lunas' },
+                    { id: 5, customer_id: 2, periode: '2026-05', pemakaian: 10.0, tarif: 10000, jumlah: 100000,
+                        tgl_bayar: '2026-05-15', metode: 'Transfer', status: 'lunas' },
+                    { id: 6, customer_id: 4, periode: '2026-05', pemakaian: 13.0, tarif: 10000, jumlah: 130000,
+                        tgl_bayar: '2026-05-10', metode: 'Tunai', status: 'lunas' },
+                    { id: 7, customer_id: 3, periode: '2026-06', pemakaian: 9.0, tarif: 10000, jumlah: 90000,
+                        tgl_bayar: null, metode: null, status: 'belum' }
+                ],
+                employees: [
+                    { id: 1, nama: 'M. Rizki', jabatan: 'Operator Pompa', gaji_pokok: 2500000, tunjangan: 300000,
+                        potongan: 50000, status: 'Lunas' },
+                    { id: 2, nama: 'Ratna Sari', jabatan: 'Administrasi', gaji_pokok: 2800000, tunjangan: 200000,
+                        potongan: 0, status: 'Lunas' },
+                    { id: 3, nama: 'Joko Prayitno', jabatan: 'Teknisi', gaji_pokok: 3200000, tunjangan: 400000,
+                        potongan: 100000, status: 'Proses' },
+                    { id: 4, nama: 'Eko Prasetyo', jabatan: 'Keamanan', gaji_pokok: 2200000, tunjangan: 100000,
+                        potongan: 0, status: 'Belum Bayar' }
+                ],
+                expenses: expenses
+            };
+        }
+
+        function getNextId() {
+            let max = 0;
+            [...appData.customers, ...appData.payments, ...appData.employees].forEach(item => {
+                if (item.id > max) max = item.id;
+            });
+            return max + 1;
+        }
+
+        // ============================================================
+        // 2. TOAST
+        // ============================================================
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const color = type === 'success' ? 'bg-success' : type === 'danger' ? 'bg-danger' : 'bg-warning';
+            const html =
+                `<div class="toast align-items-center text-white ${color} border-0 show" role="alert" style="min-width:250px;">
+                <div class="d-flex"><div class="toast-body">${message}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>
+            </div>`;
+            container.insertAdjacentHTML('beforeend', html);
+            setTimeout(() => {
+                const toasts = container.querySelectorAll('.toast');
+                if (toasts.length) toasts[0].remove();
+            }, 3500);
+        }
+
+        // ============================================================
+        // 3. RENDER
+        // ============================================================
+        function renderAll() {
+            renderPelanggan();
+            renderTagihan();
+            renderKaryawan();
+            renderDashboard();
+            renderChart();
+            populateCustomerDropdown();
+            // Cek session login pelanggan
+            const loggedId = sessionStorage.getItem('loggedCustomerId');
+            if (loggedId) {
+                const cust = appData.customers.find(c => c.id == loggedId);
+                if (cust) {
+                    document.getElementById('customerLoginArea').querySelector('.login-box').style.display = 'none';
+                    document.getElementById('customerInfoArea').style.display = 'block';
+                    tampilkanDetailPelangganCustomer(parseInt(loggedId));
+                }
+            }
+        }
+
+        function populateCustomerDropdown() {
+            const select = document.getElementById('inpTagihanPelanggan');
+            if (!select) return;
+            select.innerHTML = '<option value="">-- Pilih Pelanggan --</option>';
+            appData.customers.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = c.nama + ' (' + (c.no_sambungan || 'SB-' + String(c.id).padStart(3, '0')) + ')';
+                select.appendChild(opt);
+            });
+        }
+
+        function renderPelanggan() {
+            const tbody = document.getElementById('tbodyPelanggan');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            appData.customers.forEach(c => {
+                const noSamb = c.no_sambungan || 'SB-' + String(c.id).padStart(3, '0');
+                const statusBadge = c.status === 'aktif' ? '<span class="badge bg-success">Aktif</span>' :
+                    '<span class="badge bg-danger">Nonaktif</span>';
+                const toggleBtn = c.status === 'aktif' ?
+                    `<button class="btn btn-warning btn-sm" onclick="toggleStatusPelanggan(${c.id})"><i class="fas fa-pause"></i> Nonaktifkan</button>` :
+                    `<button class="btn btn-success btn-sm" onclick="toggleStatusPelanggan(${c.id})"><i class="fas fa-play"></i> Aktifkan</button>`;
+                tbody.innerHTML += `<tr>
+                    <td>${noSamb}</td><td>${c.nama}</td><td>${c.alamat}</td><td>${c.telp}</td>
+                    <td>${statusBadge}</td>
+                    <td>
+                        <button class="btn btn-primary btn-sm" onclick="editPelanggan(${c.id})"><i class="fas fa-edit"></i></button>
+                        ${toggleBtn}
+                        <button class="btn btn-danger btn-sm" onclick="hapusPelanggan(${c.id})"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        function renderTagihan() {
+            const tbodyBelum = document.getElementById('tbodyTagihanBelum');
+            const tbodyRiwayat = document.getElementById('tbodyRiwayatBayar');
+            if (!tbodyBelum || !tbodyRiwayat) return;
+            tbodyBelum.innerHTML = '';
+            tbodyRiwayat.innerHTML = '';
+
+            // Tagihan Belum Lunas
+            appData.payments.filter(p => p.status === 'belum').forEach(p => {
+                const cust = appData.customers.find(c => c.id === p.customer_id);
+                let nama = cust ? cust.nama : 'Unknown';
+                let warning = '';
+                if (cust && cust.status === 'nonaktif') warning = ' <span class="badge bg-danger">Nonaktif</span>';
+                tbodyBelum.innerHTML += `<tr>
+                    <td>${nama} ${warning}</td>
+                    <td>${p.periode}</td>
+                    <td>${p.pemakaian || 0}</td>
+                    <td>Rp ${(p.tarif || 10000).toLocaleString()}</td>
+                    <td>Rp ${p.jumlah.toLocaleString()}</td>
+                    <td><span class="badge bg-danger">Belum Bayar</span></td>
+                    <td><button class="btn btn-success btn-sm" onclick="bukaModalBayar(${p.id})"><i class="fas fa-check"></i> Bayar</button></td>
+                </tr>`;
+            });
+            if (appData.payments.filter(p => p.status === 'belum').length === 0) {
+                tbodyBelum.innerHTML = '<tr><td colspan="7" class="text-muted">Semua tagihan sudah lunas.</td></tr>';
+            }
+
+            // Riwayat: 5 terbaru
+            const lunas = appData.payments.filter(p => p.status === 'lunas')
+                .sort((a, b) => (a.tgl_bayar < b.tgl_bayar ? 1 : -1))
+                .slice(0, 5);
+            lunas.forEach(p => {
+                const cust = appData.customers.find(c => c.id === p.customer_id);
+                const nama = cust ? cust.nama : 'Unknown';
+                tbodyRiwayat.innerHTML += `<tr>
+                    <td>${nama}</td><td>${p.periode}</td><td>${p.pemakaian || 0}</td>
+                    <td>Rp ${p.jumlah.toLocaleString()}</td>
+                    <td><span class="badge bg-info">${p.metode || '-'}</span></td>
+                    <td>${p.tgl_bayar || '-'}</td>
+                </tr>`;
+            });
+            if (lunas.length === 0) tbodyRiwayat.innerHTML = '<tr><td colspan="6" class="text-muted">Belum ada pembayaran</td></tr>';
+        }
+
+        function renderKaryawan() {
+            const tbody = document.getElementById('tbodyKaryawan');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            let totalGaji = 0;
+            appData.employees.forEach(k => {
+                const bersih = k.gaji_pokok + k.tunjangan - k.potongan;
+                totalGaji += bersih;
+                const statusBadge = k.status === 'Lunas' ? '<span class="badge bg-success">Lunas</span>' :
+                    k.status === 'Proses' ? '<span class="badge bg-warning text-dark">Proses</span>' :
+                    '<span class="badge bg-danger">Belum Bayar</span>';
+                tbody.innerHTML += `<tr>
+                    <td>${k.nama}</td><td>${k.jabatan}</td>
+                    <td>Rp ${k.gaji_pokok.toLocaleString()}</td>
+                    <td>Rp ${k.tunjangan.toLocaleString()}</td>
+                    <td>Rp ${k.potongan.toLocaleString()}</td>
+                    <td><strong>Rp ${bersih.toLocaleString()}</strong></td>
+                    <td>${statusBadge}</td>
+                    <td>
+                        <button class="btn btn-primary btn-sm" onclick="editKaryawan(${k.id})"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-info btn-sm" onclick="bukaModalUpdateGaji(${k.id})"><i class="fas fa-sync-alt"></i> Status</button>
+                        <button class="btn btn-danger btn-sm" onclick="hapusKaryawan(${k.id})"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>`;
+            });
+            document.getElementById('totalGajiDisplay').innerHTML =
+                `<i class="fas fa-info-circle text-primary"></i> Total Gaji Periode Ini: <strong>Rp ${totalGaji.toLocaleString()}</strong>`;
+        }
+
+        function renderDashboard() {
+            const totalAktif = appData.customers.filter(c => c.status === 'aktif').length;
+            const totalKaryawan = appData.employees.length;
+            const bulanIni = new Date().toISOString().slice(0, 7);
+            const pendapatanBulanIni = appData.payments
+                .filter(p => p.status === 'lunas' && p.periode === bulanIni)
+                .reduce((sum, p) => sum + p.jumlah, 0);
+            const tertunggak = appData.payments.filter(p => p.status === 'belum').length;
+            document.getElementById('statPelanggan').innerText = totalAktif;
+            document.getElementById('statPendapatan').innerText = 'Rp ' + pendapatanBulanIni.toLocaleString();
+            document.getElementById('statTertunggak').innerText = tertunggak;
+            document.getElementById('statKaryawan').innerText = totalKaryawan;
+        }
+
+        // Chart
+        function renderChart() {
+            const container = document.getElementById('chartContainer');
+            if (!container) return;
+            const months = [];
+            const now = new Date();
+            for (let i = 5; i >= 0; i--) {
+                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                months.push(d.toISOString().slice(0, 7));
+            }
+            const pendapatan = months.map(month =>
+                appData.payments.filter(p => p.status === 'lunas' && p.periode === month)
+                .reduce((s, p) => s + p.jumlah, 0)
+            );
+            const pengeluaran = months.map(month => {
+                const e = appData.expenses.find(ex => ex.bulan === month);
+                return e ? e.total : 0;
+            });
+            const allValues = [...pendapatan, ...pengeluaran];
+            const maxVal = Math.max(...allValues, 1);
+            const width = container.clientWidth || 600;
+            const height = container.clientHeight || 220;
+            const padding = { top: 20, right: 20, bottom: 30, left: 40 };
+            const chartWidth = width - padding.left - padding.right;
+            const chartHeight = height - padding.top - padding.bottom;
+            const xScale = (idx) => padding.left + (idx / (months.length - 1)) * chartWidth;
+            const yScale = (val) => padding.top + chartHeight - (val / maxVal) * chartHeight;
+            let svg = `<svg viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">`;
+            for (let i = 0; i <= 5; i++) {
+                const y = padding.top + (i / 5) * chartHeight;
+                const val = maxVal - (i / 5) * maxVal;
+                svg +=
+                    `<line x1="${padding.left}" y1="${y}" x2="${width - padding.right}" y2="${y}" stroke="#e9ecef" stroke-width="0.5"/>`;
+                svg +=
+                    `<text x="${padding.left - 5}" y="${y + 4}" font-size="9" fill="#6c757d" text-anchor="end">${Math.round(val/1000)}k</text>`;
+            }
+            let pathP = `M ${xScale(0)} ${yScale(pendapatan[0])}`;
+            for (let i = 1; i < months.length; i++) pathP += ` L ${xScale(i)} ${yScale(pendapatan[i])}`;
+            svg += `<path d="${pathP}" fill="none" stroke="#0a3d62" stroke-width="2.5" stroke-linejoin="round"/>`;
+            let pathE = `M ${xScale(0)} ${yScale(pengeluaran[0])}`;
+            for (let i = 1; i < months.length; i++) pathE += ` L ${xScale(i)} ${yScale(pengeluaran[i])}`;
+            svg += `<path d="${pathE}" fill="none" stroke="#dc3545" stroke-width="2.5" stroke-linejoin="round"/>`;
+            pendapatan.forEach((val, i) => {
+                const cx = xScale(i),
+                    cy = yScale(val);
+                svg += `<circle cx="${cx}" cy="${cy}" r="4" fill="#0a3d62" stroke="white" stroke-width="1.5"/>`;
+            });
+            pengeluaran.forEach((val, i) => {
+                const cx = xScale(i),
+                    cy = yScale(val);
+                svg += `<circle cx="${cx}" cy="${cy}" r="4" fill="#dc3545" stroke="white" stroke-width="1.5"/>`;
+            });
+            months.forEach((m, i) => {
+                const label = m.slice(5) + '/' + m.slice(2, 4);
+                svg +=
+                    `<text x="${xScale(i)}" y="${height - 5}" font-size="10" fill="#6c757d" text-anchor="middle">${label}</text>`;
+            });
+            svg += '</svg>';
+            container.innerHTML = svg;
+        }
+
+        // ============================================================
+        // 4. CRUD PELANGGAN
+        // ============================================================
+        function bukaModalPelanggan(id = null) {
+            const modal = new bootstrap.Modal(document.getElementById('modalPelanggan'));
+            document.getElementById('editPelangganId').value = '';
+            document.getElementById('inpNoSamb').value = '';
+            document.getElementById('inpNama').value = '';
+            document.getElementById('inpAlamat').value = '';
+            document.getElementById('inpTelp').value = '';
+            document.getElementById('modalPelangganTitle').innerText = 'Tambah Pelanggan';
+            if (id) {
+                const cust = appData.customers.find(c => c.id === id);
+                if (cust) {
+                    document.getElementById('editPelangganId').value = id;
+                    document.getElementById('inpNoSamb').value = cust.no_sambungan || '';
+                    document.getElementById('inpNama').value = cust.nama;
+                    document.getElementById('inpAlamat').value = cust.alamat;
+                    document.getElementById('inpTelp').value = cust.telp;
+                    document.getElementById('modalPelangganTitle').innerText = 'Edit Pelanggan';
+                }
+            }
+            modal.show();
+        }
+
+        document.getElementById('btnSimpanPelanggan').addEventListener('click', async function() {
+            const id = document.getElementById('editPelangganId').value;
+            const noSamb = document.getElementById('inpNoSamb').value.trim();
+            const nama = document.getElementById('inpNama').value.trim();
+            const alamat = document.getElementById('inpAlamat').value.trim();
+            const telp = document.getElementById('inpTelp').value.trim();
+            if (!nama) return showToast('Nama wajib diisi!', 'danger');
+
+            if (id) {
+                const cust = appData.customers.find(c => c.id == id);
+                if (cust) {
+                    cust.no_sambungan = noSamb || 'SB-' + String(cust.id).padStart(3, '0');
+                    cust.nama = nama;
+                    cust.alamat = alamat;
+                    cust.telp = telp;
+                    showToast('Data pelanggan diupdate!');
+                }
+            } else {
+                const newId = getNextId();
+                const finalNoSamb = noSamb || 'SB-' + String(newId).padStart(3, '0');
+                if (appData.customers.some(c => c.no_sambungan === finalNoSamb)) {
+                    return showToast('Nomor sambungan sudah digunakan!', 'danger');
+                }
+                appData.customers.push({
+                    id: newId,
+                    no_sambungan: finalNoSamb,
+                    nama: nama,
+                    alamat: alamat,
+                    telp: telp,
+                    status: 'aktif'
+                });
+                showToast('Pelanggan baru ditambahkan!');
+            }
+            await saveData();
+            bootstrap.Modal.getInstance(document.getElementById('modalPelanggan')).hide();
+        });
+
+        window.editPelanggan = function(id) { bukaModalPelanggan(id); };
+
+        window.hapusPelanggan = async function(id) {
+            if (!confirm('Hapus pelanggan ini?')) return;
+            appData.customers = appData.customers.filter(c => c.id !== id);
+            appData.payments = appData.payments.filter(p => p.customer_id !== id);
+            await saveData();
+            showToast('Pelanggan dihapus.', 'danger');
+        };
+
+        window.toggleStatusPelanggan = async function(id) {
+            const cust = appData.customers.find(c => c.id === id);
+            if (!cust) return;
+            const newStatus = cust.status === 'aktif' ? 'nonaktif' : 'aktif';
+            const statusText = newStatus === 'aktif' ? 'AKTIF' : 'NONAKTIF';
+            if (newStatus === 'nonaktif') {
+                if (!confirm(`Yakin menonaktifkan pelanggan "${cust.nama}"?`)) return;
+            } else {
+                if (!confirm(`Aktifkan pelanggan "${cust.nama}" kembali?`)) return;
+            }
+            cust.status = newStatus;
+            showToast(`Status pelanggan "${cust.nama}" diubah menjadi ${statusText}.`);
+            await saveData();
+        };
+
+        // ============================================================
+        // 5. TAMBAH TAGIHAN
+        // ============================================================
+        function hitungTotalTagihan() {
+            const pemakaian = parseFloat(document.getElementById('inpTagihanPemakaian').value) || 0;
+            const tarif = parseInt(document.getElementById('inpTagihanTarif').value) || 0;
+            const total = pemakaian * tarif;
+            document.getElementById('inpTagihanTotal').value = total > 0 ? 'Rp ' + total.toLocaleString() : '';
+            return total;
+        }
+        document.getElementById('inpTagihanPemakaian').addEventListener('input', hitungTotalTagihan);
+        document.getElementById('inpTagihanTarif').addEventListener('input', hitungTotalTagihan);
+
+        document.getElementById('btnSimpanTagihan').addEventListener('click', async function() {
+            const customerId = parseInt(document.getElementById('inpTagihanPelanggan').value);
+            const periode = document.getElementById('inpTagihanPeriode').value;
+            const pemakaian = parseFloat(document.getElementById('inpTagihanPemakaian').value) || 0;
+            const tarif = parseInt(document.getElementById('inpTagihanTarif').value) || 0;
+            const total = pemakaian * tarif;
+
+            if (!customerId) return showToast('Pilih pelanggan!', 'danger');
+            if (!periode) return showToast('Pilih periode!', 'danger');
+            if (pemakaian <= 0) return showToast('Masukkan pemakaian yang valid!', 'danger');
+            if (tarif <= 0) return showToast('Masukkan tarif yang valid!', 'danger');
+
+            if (appData.payments.some(p => p.customer_id === customerId && p.periode === periode)) {
+                return showToast('Tagihan untuk periode ini sudah ada!', 'danger');
+            }
+
+            appData.payments.push({
+                id: getNextId(),
+                customer_id: customerId,
+                periode: periode,
+                pemakaian: pemakaian,
+                tarif: tarif,
+                jumlah: total,
+                tgl_bayar: null,
+                metode: null,
+                status: 'belum'
+            });
+            showToast('Tagihan berhasil ditambahkan!');
+            await saveData();
+            bootstrap.Modal.getInstance(document.getElementById('modalTambahTagihan')).hide();
+            document.getElementById('inpTagihanPelanggan').value = '';
+            document.getElementById('inpTagihanPeriode').value = '';
+            document.getElementById('inpTagihanPemakaian').value = '';
+            document.getElementById('inpTagihanTarif').value = '10000';
+            document.getElementById('inpTagihanTotal').value = '';
+        });
+
+        document.getElementById('modalTambahTagihan').addEventListener('shown.bs.modal', function() {
+            const now = new Date();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const year = now.getFullYear();
+            document.getElementById('inpTagihanPeriode').value = year + '-' + month;
+            document.getElementById('inpTagihanTarif').value = '10000';
+            document.getElementById('inpTagihanTotal').value = '';
+            populateCustomerDropdown();
+        });
+
+        // ============================================================
+        // 6. PEMBAYARAN
+        // ============================================================
+        window.bukaModalBayar = function(paymentId) {
+            const p = appData.payments.find(pay => pay.id === paymentId);
+            if (!p) return;
+            const cust = appData.customers.find(c => c.id === p.customer_id);
+            document.getElementById('bayarTagihanId').value = p.id;
+            document.getElementById('bayarNamaPelanggan').innerText = cust ? cust.nama : 'Unknown';
+            document.getElementById('bayarTotalTagihan').innerText = 'Rp ' + p.jumlah.toLocaleString();
+            document.getElementById('bayarJumlahInput').value = p.jumlah;
+            document.getElementById('bayarJumlahInput').min = 0;
+            new bootstrap.Modal(document.getElementById('modalBayar')).show();
+        };
+
+        document.getElementById('btnKonfirmasiBayar').addEventListener('click', async function() {
+            const id = parseInt(document.getElementById('bayarTagihanId').value);
+            const p = appData.payments.find(pay => pay.id === id);
+            if (!p) return;
+            const jumlahBayar = parseInt(document.getElementById('bayarJumlahInput').value);
+            const metode = document.getElementById('bayarMetode').value;
+
+            if (isNaN(jumlahBayar) || jumlahBayar <= 0) {
+                return showToast('Masukkan jumlah bayar yang valid!', 'danger');
+            }
+            if (jumlahBayar < p.jumlah) {
+                return showToast('Jumlah bayar kurang dari total tagihan!', 'danger');
+            }
+
+            p.status = 'lunas';
+            p.tgl_bayar = new Date().toISOString().split('T')[0];
+            p.metode = metode;
+            p.jumlah_dibayar = jumlahBayar;
+            showToast(`✅ Pembayaran Rp ${jumlahBayar.toLocaleString()} berhasil! Metode: ${metode}`);
+            await saveData();
+            bootstrap.Modal.getInstance(document.getElementById('modalBayar')).hide();
+        });
+
+        // ============================================================
+        // 7. CRUD KARYAWAN & UPDATE STATUS GAJI
+        // ============================================================
+        function bukaModalKaryawan(id = null) {
+            const modal = new bootstrap.Modal(document.getElementById('modalKaryawan'));
+            document.getElementById('editKaryawanId').value = '';
+            document.getElementById('inpKNama').value = '';
+            document.getElementById('inpKJabatan').value = '';
+            document.getElementById('inpKGaji').value = '';
+            document.getElementById('inpKTunjangan').value = '0';
+            document.getElementById('inpKPotongan').value = '0';
+            document.getElementById('modalKaryawanTitle').innerText = 'Tambah Karyawan';
+            if (id) {
+                const k = appData.employees.find(e => e.id === id);
+                if (k) {
+                    document.getElementById('editKaryawanId').value = id;
+                    document.getElementById('inpKNama').value = k.nama;
+                    document.getElementById('inpKJabatan').value = k.jabatan;
+                    document.getElementById('inpKGaji').value = k.gaji_pokok;
+                    document.getElementById('inpKTunjangan').value = k.tunjangan;
+                    document.getElementById('inpKPotongan').value = k.potongan;
+                    document.getElementById('modalKaryawanTitle').innerText = 'Edit Karyawan';
+                }
+            }
+            modal.show();
+        }
+
+        document.getElementById('btnSimpanKaryawan').addEventListener('click', async function() {
+            const id = document.getElementById('editKaryawanId').value;
+            const nama = document.getElementById('inpKNama').value.trim();
+            const jabatan = document.getElementById('inpKJabatan').value.trim();
+            const gaji = parseInt(document.getElementById('inpKGaji').value) || 0;
+            const tunjangan = parseInt(document.getElementById('inpKTunjangan').value) || 0;
+            const potongan = parseInt(document.getElementById('inpKPotongan').value) || 0;
+            if (!nama || !jabatan || gaji < 1) return showToast('Isi nama, jabatan, dan gaji dengan benar!', 'danger');
+
+            if (id) {
+                const k = appData.employees.find(e => e.id == id);
+                if (k) {
+                    k.nama = nama;
+                    k.jabatan = jabatan;
+                    k.gaji_pokok = gaji;
+                    k.tunjangan = tunjangan;
+                    k.potongan = potongan;
+                    showToast('Data karyawan diupdate!');
+                }
+            } else {
+                appData.employees.push({
+                    id: getNextId(),
+                    nama: nama,
+                    jabatan: jabatan,
+                    gaji_pokok: gaji,
+                    tunjangan: tunjangan,
+                    potongan: potongan,
+                    status: 'Proses'
+                });
+                showToast('Karyawan baru ditambahkan!');
+            }
+            await saveData();
+            bootstrap.Modal.getInstance(document.getElementById('modalKaryawan')).hide();
+        });
+
+        window.editKaryawan = function(id) { bukaModalKaryawan(id); };
+
+        window.hapusKaryawan = async function(id) {
+            if (!confirm('Hapus karyawan ini?')) return;
+            appData.employees = appData.employees.filter(e => e.id !== id);
+            await saveData();
+            showToast('Karyawan dihapus.', 'danger');
+        };
+
+        function catatPengeluaran(bulan, jumlah) {
+            const existing = appData.expenses.find(e => e.bulan === bulan);
+            if (existing) {
+                existing.total += jumlah;
+            } else {
+                appData.expenses.push({ bulan: bulan, total: jumlah });
+            }
+        }
+
+        window.bukaModalUpdateGaji = function(id) {
+            const k = appData.employees.find(e => e.id === id);
+            if (!k) return;
+            document.getElementById('editGajiId').value = id;
+            document.getElementById('editGajiNama').innerText = k.nama;
+            document.getElementById('editGajiStatus').value = k.status;
+            new bootstrap.Modal(document.getElementById('modalUpdateGaji')).show();
+        };
+
+        document.getElementById('btnSimpanUpdateGaji').addEventListener('click', async function() {
+            const id = parseInt(document.getElementById('editGajiId').value);
+            const k = appData.employees.find(e => e.id === id);
+            if (!k) return;
+            const newStatus = document.getElementById('editGajiStatus').value;
+            const oldStatus = k.status;
+            k.status = newStatus;
+
+            if (newStatus === 'Lunas' && oldStatus !== 'Lunas') {
+                const bulanIni = new Date().toISOString().slice(0, 7);
+                const gajiBersih = k.gaji_pokok + k.tunjangan - k.potongan;
+                catatPengeluaran(bulanIni, gajiBersih);
+                showToast(
+                    `Pengeluaran gaji ${k.nama} sebesar Rp ${gajiBersih.toLocaleString()} dicatat untuk bulan ${bulanIni}.`);
+            }
+            showToast(`Status gaji ${k.nama} diubah menjadi ${newStatus}.`);
+            await saveData();
+            bootstrap.Modal.getInstance(document.getElementById('modalUpdateGaji')).hide();
+        });
+
+        // ============================================================
+        // 8. AKSES PELANGGAN (Login dengan No Sambungan)
+        // ============================================================
+        function tampilkanDetailPelangganCustomer(id) {
+            const cust = appData.customers.find(c => c.id === id);
+            if (!cust) return;
+
+            const noSamb = cust.no_sambungan || 'SB-' + String(cust.id).padStart(3, '0');
+            const statusBadge = cust.status === 'aktif' ?
+                '<span class="badge bg-success">Aktif</span>' :
+                '<span class="badge bg-danger">Nonaktif</span>';
+
+            document.getElementById('customerDetail').innerHTML = `
+                <div class="row">
+                    <div class="col-md-6"><strong>Nama:</strong> ${cust.nama}</div>
+                    <div class="col-md-6"><strong>No Sambungan:</strong> ${noSamb}</div>
+                    <div class="col-md-6"><strong>Alamat:</strong> ${cust.alamat}</div>
+                    <div class="col-md-6"><strong>Status:</strong> ${statusBadge}</div>
+                </div>
+            `;
+
+            const bulanIni = new Date().toISOString().slice(0, 7);
+            const tagihan = appData.payments.find(p => p.customer_id === id && p.periode === bulanIni);
+            const divTagihan = document.getElementById('custTagihanDetail');
+            if (tagihan) {
+                const statusBayar = tagihan.status === 'lunas' ?
+                    '<span class="badge bg-success">Lunas</span>' :
+                    '<span class="badge bg-warning">Menunggu Pembayaran</span>';
+                divTagihan.innerHTML = `
+                    <h5>Periode: ${tagihan.periode}</h5>
+                    <p>Pemakaian: ${tagihan.pemakaian || 0} m³</p>
+                    <p>Total Tagihan: <strong>Rp ${tagihan.jumlah.toLocaleString()}</strong></p>
+                    <p>Status: ${statusBayar}</p>
+                `;
+            } else {
+                divTagihan.innerHTML = `<p class="text-muted">Tidak ada tagihan untuk bulan ini.</p>`;
+            }
+
+            const tbody = document.getElementById('custRiwayatTable');
+            tbody.innerHTML = '';
+            const riwayat = appData.payments.filter(p => p.customer_id === id && p.status === 'lunas').reverse();
+            if (riwayat.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-muted">Belum ada riwayat pembayaran.</td></tr>';
+            } else {
+                riwayat.forEach(p => {
+                    tbody.innerHTML +=
+                        `<tr><td>${p.periode}</td><td>${p.pemakaian || 0} m³</td><td>Rp ${p.jumlah.toLocaleString()}</td><td><span class="badge bg-success">Lunas</span></td></tr>`;
+                });
+            }
+        }
+
+        // Login pelanggan
+        document.getElementById('btnLoginPelanggan').addEventListener('click', function() {
+            const input = document.getElementById('inputNoSamb').value.trim();
+            if (!input) {
+                showToast('Masukkan nomor sambungan!', 'danger');
+                return;
+            }
+            const customer = appData.customers.find(c => c.no_sambungan && c.no_sambungan.toLowerCase() === input
+            .toLowerCase());
+            if (!customer) {
+                showToast('Nomor sambungan tidak ditemukan!', 'danger');
+                return;
+            }
+            if (customer.status === 'nonaktif') {
+                showToast('Pelanggan ini sudah dinonaktifkan. Hubungi admin.', 'danger');
+                return;
+            }
+            sessionStorage.setItem('loggedCustomerId', customer.id);
+            document.getElementById('customerLoginArea').querySelector('.login-box').style.display = 'none';
+            document.getElementById('customerInfoArea').style.display = 'block';
+            tampilkanDetailPelangganCustomer(customer.id);
+            showToast('Selamat datang, ' + customer.nama + '!');
+        });
+
+        // Logout pelanggan
+        document.getElementById('btnLogoutPelanggan').addEventListener('click', function() {
+            sessionStorage.removeItem('loggedCustomerId');
+            document.getElementById('customerLoginArea').querySelector('.login-box').style.display = 'block';
+            document.getElementById('customerInfoArea').style.display = 'none';
+            document.getElementById('inputNoSamb').value = '';
+            showToast('Anda telah logout.');
+        });
+
+        // ============================================================
+        // 9. RESET DATA
+        // ============================================================
+        document.getElementById('resetDataBtn').addEventListener('click', async function() {
+            if (confirm('Yakin mereset semua data ke default?')) {
+                appData = getDefaultData();
+                await saveData();
+                showToast('Data berhasil direset!');
+            }
+        });
+
+        // ============================================================
+        // 10. NAVIGASI
+        // ============================================================
+        document.querySelectorAll('.sidebar .nav-link[data-page]').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelectorAll('.sidebar .nav-link').forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+                document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+                const target = this.getAttribute('data-page');
+                const el = document.getElementById('page-' + target);
+                if (el) el.classList.add('active');
+                if (target === 'tagihan') populateCustomerDropdown();
+                if (target === 'dashboard') renderChart();
+                if (target === 'akses-pelanggan') {
+                    const loggedId = sessionStorage.getItem('loggedCustomerId');
+                    if (loggedId) {
+                        const cust = appData.customers.find(c => c.id == loggedId);
+                        if (cust) {
+                            document.getElementById('customerLoginArea').querySelector('.login-box').style.display = 'none';
+                            document.getElementById('customerInfoArea').style.display = 'block';
+                            tampilkanDetailPelangganCustomer(parseInt(loggedId));
+                        } else {
+                            sessionStorage.removeItem('loggedCustomerId');
+                            document.getElementById('customerLoginArea').querySelector('.login-box').style.display = 'block';
+                            document.getElementById('customerInfoArea').style.display = 'none';
+                        }
+                    } else {
+                        document.getElementById('customerLoginArea').querySelector('.login-box').style.display = 'block';
+                        document.getElementById('customerInfoArea').style.display = 'none';
+                    }
+                }
+            });
+        });
+
+        // ============================================================
+        // 11. INIT
+        // ============================================================
+        window.addEventListener('DOMContentLoaded', async function() {
+            await loadData();
+            console.log('✅ Keuangan ABM terhubung ke Firebase Realtime Database.');
+        });
+    </script>
+</body>
+</html>
