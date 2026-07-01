@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Akses Pelanggan - Air Bersih Mauluddaras</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-database-compat.js"></script>
+    <style>
+        body {
+            background: #f0f4f8;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container-custom {
+            max-width: 700px;
+            width: 100%;
+        }
+        .card-header {
+            background: #0a3d62;
+            color: white;
+            border-radius: 12px 12px 0 0;
+        }
+        .card-header h4 {
+            margin: 0;
+            font-weight: 600;
+        }
+        .login-box {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+        .customer-info-box {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #0a3d62;
+        }
+        .table th {
+            background: #e9f0f5;
+        }
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+        .badge-status {
+            font-size: 0.85rem;
+            padding: 6px 12px;
+        }
+        .btn-logout {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            transition: 0.2s;
+        }
+        .btn-logout:hover {
+            background: #c82333;
+        }
+        .brand-icon {
+            color: #6bcbff;
+            margin-right: 10px;
+        }
+        .footer-text {
+            margin-top: 30px;
+            color: #6c757d;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container-custom">
+
+    <!-- TOAST -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- KARTU UTAMA -->
+    <div class="card shadow">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4><i class="fas fa-water brand-icon"></i> Air Bersih Mauluddaras</h4>
+            <span class="badge bg-light text-dark">Akses Pelanggan</span>
+        </div>
+        <div class="card-body" id="mainContent">
+
+            <!-- Area Login -->
+            <div id="loginArea">
+                <div class="login-box">
+                    <h5 class="mb-3"><i class="fas fa-user-lock me-2"></i> Masukkan Nomor Sambungan</h5>
+                    <div class="mb-3">
+                        <label for="inputNoSamb" class="form-label">Nomor Sambungan</label>
+                        <input type="text" class="form-control form-control-lg" id="inputNoSamb" placeholder="Contoh: SB-001" />
+                    </div>
+                    <button class="btn btn-primary w-100 btn-lg" id="btnLogin"><i class="fas fa-sign-in-alt me-2"></i> Lihat Data</button>
+                    <div class="mt-3 text-center text-muted small">
+                        <i class="fas fa-info-circle"></i> Masukkan nomor sambungan yang terdaftar
+                    </div>
+                </div>
+            </div>
+
+            <!-- Area Informasi Pelanggan (sembunyi) -->
+            <div id="infoArea" style="display: none;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5><i class="fas fa-user-circle me-2"></i> Informasi Pelanggan</h5>
+                    <button class="btn-logout" id="btnLogout"><i class="fas fa-sign-out-alt me-1"></i> Logout</button>
+                </div>
+
+                <!-- Data pelanggan -->
+                <div class="customer-info-box" id="customerDetail">
+                    <!-- diisi JavaScript -->
+                </div>
+
+                <!-- Tagihan bulan ini -->
+                <div class="card border-primary mb-3">
+                    <div class="card-header bg-primary text-white">
+                        <i class="fas fa-file-invoice me-2"></i> Tagihan Bulan Ini
+                    </div>
+                    <div class="card-body" id="custTagihanDetail">
+                        Silakan login terlebih dahulu.
+                    </div>
+                </div>
+
+                <!-- Riwayat pembayaran -->
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <i class="fas fa-history me-2"></i> Riwayat Pembayaran
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-sm table-hover m-0">
+                            <thead>
+                                <tr>
+                                    <th>Periode</th>
+                                    <th>Pemakaian (m³)</th>
+                                    <th>Jumlah</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="custRiwayatTable">
+                                <tr><td colspan="4" class="text-muted text-center">Belum ada data.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Catatan kecil -->
+                <div class="mt-3 text-muted small">
+                    <i class="fas fa-info-circle"></i> Jika ada pertanyaan, hubungi admin di <strong>0812-7623-120</strong>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer-text">
+        &copy; 2026 Air Bersih Mauluddaras &mdash; Sistem Keuangan
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // ============================================================
+    // KONFIGURASI FIREBASE (GANTI DENGAN MILIK ANDA)
+    // ============================================================
+    const firebaseConfig = {
+        apiKey: "AIzaSyA5KVUjC-KoBhhbxh2JJA-2iJ64oHUrJoA",
+        authDomain: "mauluddaras-air.firebaseapp.com",
+        databaseURL: "https://mauluddaras-air-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "mauluddaras-air",
+        storageBucket: "mauluddaras-air.firebasestorage.app",
+        messagingSenderId: "464693587317",
+        appId: "1:464693587317:web:d0b8e7448014e5b6c9373c",
+        measurementId: "G-WVEK3VXZ19"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // ============================================================
+    // DATA LAYER
+    // ============================================================
+    let appData = { customers: [], payments: [] };
+
+    async function loadData() {
+        try {
+            const snapshot = await db.ref('/').once('value');
+            const data = snapshot.val();
+            if (data) {
+                appData.customers = data.customers || [];
+                appData.payments = data.payments || [];
+            }
+            // Refresh tampilan jika sudah login
+            const loggedId = sessionStorage.getItem('loggedCustomerId');
+            if (loggedId) {
+                const cust = appData.customers.find(c => c.id == loggedId);
+                if (cust && cust.status === 'aktif') {
+                    tampilkanDetailPelanggan(parseInt(loggedId));
+                } else {
+                    sessionStorage.removeItem('loggedCustomerId');
+                    document.getElementById('loginArea').style.display = 'block';
+                    document.getElementById('infoArea').style.display = 'none';
+                }
+            }
+        } catch (e) {
+            console.error('Gagal load data:', e);
+            showToast('Gagal mengambil data dari server!', 'danger');
+        }
+    }
+
+    // ============================================================
+    // TOAST
+    // ============================================================
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('toastContainer');
+        const color = type === 'success' ? 'bg-success' : type === 'danger' ? 'bg-danger' : 'bg-warning';
+        const html = `<div class="toast align-items-center text-white ${color} border-0 show" role="alert" style="min-width:250px;">
+            <div class="d-flex"><div class="toast-body">${message}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>
+        </div>`;
+        container.insertAdjacentHTML('beforeend', html);
+        setTimeout(() => {
+            const toasts = container.querySelectorAll('.toast');
+            if (toasts.length) toasts[0].remove();
+        }, 3500);
+    }
+
+    // ============================================================
+    // FUNGSI TAMPILAN PELANGGAN
+    // ============================================================
+    function tampilkanDetailPelanggan(id) {
+        const cust = appData.customers.find(c => c.id === id);
+        if (!cust) {
+            showToast('Data pelanggan tidak ditemukan!', 'danger');
+            return;
+        }
+
+        const noSamb = cust.no_sambungan || 'SB-' + String(cust.id).padStart(3, '0');
+        const statusBadge = cust.status === 'aktif' ?
+            '<span class="badge bg-success badge-status">Aktif</span>' :
+            '<span class="badge bg-danger badge-status">Nonaktif</span>';
+
+        // Info pelanggan
+        document.getElementById('customerDetail').innerHTML = `
+            <div class="row">
+                <div class="col-md-6"><strong>Nama:</strong> ${cust.nama}</div>
+                <div class="col-md-6"><strong>No Sambungan:</strong> ${noSamb}</div>
+                <div class="col-md-6"><strong>Alamat:</strong> ${cust.alamat}</div>
+                <div class="col-md-6"><strong>Status:</strong> ${statusBadge}</div>
+            </div>
+        `;
+
+        // Tagihan bulan ini
+        const bulanIni = new Date().toISOString().slice(0, 7);
+        const tagihan = appData.payments.find(p => p.customer_id === id && p.periode === bulanIni);
+        const divTagihan = document.getElementById('custTagihanDetail');
+        if (tagihan) {
+            const statusBayar = tagihan.status === 'lunas' ?
+                '<span class="badge bg-success badge-status">Lunas</span>' :
+                '<span class="badge bg-warning text-dark badge-status">Menunggu Pembayaran</span>';
+            divTagihan.innerHTML = `
+                <h5>Periode: ${tagihan.periode}</h5>
+                <p>Pemakaian: <strong>${tagihan.pemakaian || 0} m³</strong></p>
+                <p>Total Tagihan: <strong>Rp ${tagihan.jumlah.toLocaleString()}</strong></p>
+                <p>Status: ${statusBayar}</p>
+            `;
+        } else {
+            divTagihan.innerHTML = `<p class="text-muted">Belum ada tagihan untuk bulan ini.</p>`;
+        }
+
+        // Riwayat pembayaran
+        const tbody = document.getElementById('custRiwayatTable');
+        tbody.innerHTML = '';
+        const riwayat = appData.payments.filter(p => p.customer_id === id && p.status === 'lunas').reverse();
+        if (riwayat.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-muted text-center">Belum ada riwayat pembayaran.</td></tr>';
+        } else {
+            riwayat.forEach(p => {
+                tbody.innerHTML += `<tr>
+                    <td>${p.periode}</td>
+                    <td>${p.pemakaian || 0}</td>
+                    <td>Rp ${p.jumlah.toLocaleString()}</td>
+                    <td><span class="badge bg-success badge-status">Lunas</span></td>
+                </tr>`;
+            });
+        }
+
+        // Tampilkan area info, sembunyikan login
+        document.getElementById('loginArea').style.display = 'none';
+        document.getElementById('infoArea').style.display = 'block';
+    }
+
+    // ============================================================
+    // LOGIN
+    // ============================================================
+    document.getElementById('btnLogin').addEventListener('click', function() {
+        const input = document.getElementById('inputNoSamb').value.trim();
+        if (!input) {
+            showToast('Masukkan nomor sambungan!', 'danger');
+            return;
+        }
+
+        const customer = appData.customers.find(c => c.no_sambungan && c.no_sambungan.toLowerCase() === input.toLowerCase());
+        if (!customer) {
+            showToast('Nomor sambungan tidak ditemukan!', 'danger');
+            return;
+        }
+        if (customer.status === 'nonaktif') {
+            showToast('Pelanggan ini sudah dinonaktifkan. Hubungi admin.', 'danger');
+            return;
+        }
+
+        // Login sukses
+        sessionStorage.setItem('loggedCustomerId', customer.id);
+        tampilkanDetailPelanggan(customer.id);
+        showToast('Selamat datang, ' + customer.nama + '!');
+    });
+
+    // ============================================================
+    // LOGOUT
+    // ============================================================
+    document.getElementById('btnLogout').addEventListener('click', function() {
+        sessionStorage.removeItem('loggedCustomerId');
+        document.getElementById('loginArea').style.display = 'block';
+        document.getElementById('infoArea').style.display = 'none';
+        document.getElementById('inputNoSamb').value = '';
+        showToast('Anda telah logout.');
+    });
+
+    // ============================================================
+    // CEK SESSION SAAT LOAD
+    // ============================================================
+    window.addEventListener('DOMContentLoaded', async function() {
+        await loadData();
+        // Jika tidak ada session, tampilkan login
+        const loggedId = sessionStorage.getItem('loggedCustomerId');
+        if (!loggedId) {
+            document.getElementById('loginArea').style.display = 'block';
+            document.getElementById('infoArea').style.display = 'none';
+        }
+    });
+
+    // ============================================================
+    // DENGARKAN PERUBAHAN DATA DARI TAB LAIN
+    // ============================================================
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'firebase:authUser:mauluddaras-air') {
+            loadData();
+        }
+    });
+</script>
+</body>
+</html>
