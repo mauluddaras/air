@@ -56,8 +56,9 @@
         .laporan-ringkasan .item .value { font-size:22px; font-weight:700; color:#0a3d62; }
         .laporan-ringkasan .item.positif .value { color:#28a745; }
         .laporan-ringkasan .item.negatif .value { color:#dc3545; }
-        /* Tambahan untuk responsif tabel */
         .table-responsive { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+        .meter-input-group { display:flex; gap:10px; }
+        .meter-input-group .form-group { flex:1; }
     </style>
 </head>
 <body>
@@ -79,7 +80,6 @@
             <a class="nav-link" data-page="keuangan-lain"><i class="fas fa-exchange-alt"></i> <span>Keuangan Lain</span></a>
             <a class="nav-link" data-page="laporan"><i class="fas fa-chart-pie"></i> <span>Laporan Keuangan</span></a>
             <a class="nav-link" data-page="akses-pelanggan"><i class="fas fa-user-check"></i> <span>Akses Pelanggan</span></a>
-            <!-- Reset Data sudah dihapus -->
         </nav>
     </div>
 
@@ -93,7 +93,7 @@
             </div>
         </div>
 
-        <!-- ===== DASHBOARD ===== -->
+        <!-- DASHBOARD -->
         <div id="page-dashboard" class="page-content active">
             <div class="row g-4" id="dashboardStats">
                 <div class="col-md-3"><div class="stat-card"><div class="number" id="statPelanggan">0</div><div class="label">Total Pelanggan Aktif</div></div></div>
@@ -117,7 +117,7 @@
             </div>
         </div>
 
-        <!-- ===== PELANGGAN ===== -->
+        <!-- PELANGGAN -->
         <div id="page-pelanggan" class="page-content">
             <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
                 <h5><i class="fas fa-users me-2"></i>Daftar Pelanggan</h5>
@@ -142,7 +142,7 @@
             <div class="mt-2 text-muted small"><i class="fas fa-info-circle"></i> Klik <strong>Nonaktifkan/Aktifkan</strong> untuk mengubah status.</div>
         </div>
 
-        <!-- ===== TAGIHAN ===== -->
+        <!-- TAGIHAN -->
         <div id="page-tagihan" class="page-content">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5><i class="fas fa-file-invoice me-2"></i>Tagihan &amp; Pembayaran</h5>
@@ -180,7 +180,7 @@
             </div>
         </div>
 
-        <!-- ===== PENGGAJIAN ===== -->
+        <!-- PENGGAJIAN -->
         <div id="page-penggajian" class="page-content">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5><i class="fas fa-wallet me-2"></i>Penggajian Karyawan</h5>
@@ -199,7 +199,7 @@
             <div class="mt-2" id="totalGajiDisplay"></div>
         </div>
 
-        <!-- ===== KEUANGAN LAIN ===== -->
+        <!-- KEUANGAN LAIN -->
         <div id="page-keuangan-lain" class="page-content">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5><i class="fas fa-exchange-alt me-2"></i>Pemasukan &amp; Pengeluaran Lain</h5>
@@ -238,10 +238,9 @@
             </div>
         </div>
 
-        <!-- ===== LAPORAN KEUANGAN ===== -->
+        <!-- LAPORAN KEUANGAN -->
         <div id="page-laporan" class="page-content">
             <h5><i class="fas fa-chart-pie me-2"></i>Laporan Keuangan</h5>
-
             <div class="laporan-card">
                 <div class="filter-group mb-3">
                     <label>Periode:</label>
@@ -256,7 +255,6 @@
                     <input type="date" id="filterTglSelesai" style="display:none;" />
                     <button class="btn btn-primary" id="btnFilterLaporan"><i class="fas fa-filter"></i> Tampilkan</button>
                 </div>
-
                 <div class="laporan-ringkasan" id="laporanRingkasan">
                     <div class="item"><div class="label">Total Pendapatan</div><div class="value" id="lapPendapatan">Rp 0</div></div>
                     <div class="item"><div class="label">Total Pengeluaran</div><div class="value" id="lapPengeluaran">Rp 0</div></div>
@@ -264,7 +262,6 @@
                     <div class="item"><div class="label">Jumlah Transaksi</div><div class="value" id="lapJumlahTransaksi">0</div></div>
                 </div>
             </div>
-
             <div class="card">
                 <div class="card-header bg-white fw-bold">📋 Detail Transaksi</div>
                 <div class="card-body p-0">
@@ -278,7 +275,7 @@
             </div>
         </div>
 
-        <!-- ===== AKSES PELANGGAN ===== -->
+        <!-- AKSES PELANGGAN -->
         <div id="page-akses-pelanggan" class="page-content">
             <div class="customer-view">
                 <h4 class="mb-3"><i class="fas fa-user-lock me-2"></i> Akses Pelanggan</h4>
@@ -345,7 +342,7 @@
         </div>
     </div>
 
-    <!-- Modal Tambah Tagihan (manual input pemakaian) -->
+    <!-- Modal Tambah Tagihan (dengan meteran awal dan akhir) -->
     <div class="modal fade" id="modalTambahTagihan" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -353,6 +350,24 @@
                 <div class="modal-body">
                     <div class="mb-2"><label>Pelanggan</label><select class="form-select" id="inpTagihanPelanggan"><option value="">-- Pilih Pelanggan --</option></select></div>
                     <div class="mb-2"><label>Periode (Bulan-Tahun)</label><input type="month" class="form-control" id="inpTagihanPeriode" /></div>
+
+                    <!-- Meteran Awal dan Akhir -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-2">
+                                <label>Meteran Awal (m³) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="inpMeterAwal" step="0.1" placeholder="0" required />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-2">
+                                <label>Meteran Akhir (m³) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="inpMeterAkhir" step="0.1" placeholder="0" required />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Upload Gambar -->
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-2">
@@ -369,8 +384,9 @@
                             </div>
                         </div>
                     </div>
+
                     <div class="mb-2"><label>Pemakaian (m³) <span class="text-danger">*</span></label>
-                        <input type="number" class="form-control" id="inpTagihanPemakaian" step="0.1" placeholder="Masukkan angka pemakaian" required />
+                        <input type="number" class="form-control" id="inpTagihanPemakaian" step="0.1" placeholder="Otomatis dari selisih" />
                     </div>
                     <div class="mb-2"><label>Tarif per m³ (Rp)</label><input type="number" class="form-control" id="inpTagihanTarif" value="10000" step="1000" /></div>
                     <div class="mb-2"><label>Total Tagihan (Rp)</label><input type="text" class="form-control" id="inpTagihanTotal" readonly style="background:#e9ecef;" /></div>
@@ -570,19 +586,26 @@
                 ],
                 payments: [
                     { id: 1, customer_id: 1, periode: '2026-06', pemakaian: 12.5, tarif: 10000, jumlah: 125000,
-                        tgl_bayar: null, metode: null, status: 'belum', gambar_awal: '', gambar_akhir: '' },
+                        tgl_bayar: null, metode: null, status: 'belum', gambar_awal: '', gambar_akhir: '',
+                        meter_awal: 100, meter_akhir: 112.5 },
                     { id: 2, customer_id: 2, periode: '2026-06', pemakaian: 11.0, tarif: 10000, jumlah: 110000,
-                        tgl_bayar: null, metode: null, status: 'belum', gambar_awal: '', gambar_akhir: '' },
+                        tgl_bayar: null, metode: null, status: 'belum', gambar_awal: '', gambar_akhir: '',
+                        meter_awal: 50, meter_akhir: 61 },
                     { id: 3, customer_id: 4, periode: '2026-06', pemakaian: 13.5, tarif: 10000, jumlah: 135000,
-                        tgl_bayar: '2026-06-25', metode: 'QRIS', status: 'lunas', gambar_awal: '', gambar_akhir: '' },
+                        tgl_bayar: '2026-06-25', metode: 'QRIS', status: 'lunas', gambar_awal: '', gambar_akhir: '',
+                        meter_awal: 200, meter_akhir: 213.5 },
                     { id: 4, customer_id: 1, periode: '2026-05', pemakaian: 12.0, tarif: 10000, jumlah: 120000,
-                        tgl_bayar: '2026-05-20', metode: 'Tunai', status: 'lunas', gambar_awal: '', gambar_akhir: '' },
+                        tgl_bayar: '2026-05-20', metode: 'Tunai', status: 'lunas', gambar_awal: '', gambar_akhir: '',
+                        meter_awal: 88, meter_akhir: 100 },
                     { id: 5, customer_id: 2, periode: '2026-05', pemakaian: 10.0, tarif: 10000, jumlah: 100000,
-                        tgl_bayar: '2026-05-15', metode: 'Transfer', status: 'lunas', gambar_awal: '', gambar_akhir: '' },
+                        tgl_bayar: '2026-05-15', metode: 'Transfer', status: 'lunas', gambar_awal: '', gambar_akhir: '',
+                        meter_awal: 40, meter_akhir: 50 },
                     { id: 6, customer_id: 4, periode: '2026-05', pemakaian: 13.0, tarif: 10000, jumlah: 130000,
-                        tgl_bayar: '2026-05-10', metode: 'Tunai', status: 'lunas', gambar_awal: '', gambar_akhir: '' },
+                        tgl_bayar: '2026-05-10', metode: 'Tunai', status: 'lunas', gambar_awal: '', gambar_akhir: '',
+                        meter_awal: 187, meter_akhir: 200 },
                     { id: 7, customer_id: 3, periode: '2026-06', pemakaian: 9.0, tarif: 10000, jumlah: 90000,
-                        tgl_bayar: null, metode: null, status: 'belum', gambar_awal: '', gambar_akhir: '' }
+                        tgl_bayar: null, metode: null, status: 'belum', gambar_awal: '', gambar_akhir: '',
+                        meter_awal: 10, meter_akhir: 19 }
                 ],
                 employees: [
                     { id: 1, nama: 'M. Rizki', jabatan: 'Operator Pompa', gaji_pokok: 2500000, tunjangan: 300000,
@@ -704,7 +727,7 @@
         }
 
         // ============================================================
-        // RENDER TAGIHAN
+        // RENDER TAGIHAN (ditambah kolom Meteran Awal/Akhir jika perlu)
         // ============================================================
         function renderTagihan() {
             const tbodyBelum = document.getElementById('tbodyTagihanBelum');
@@ -749,7 +772,7 @@
         }
 
         // ============================================================
-        // RENDER KARYAWAN
+        // RENDER KARYAWAN (sama)
         // ============================================================
         function renderKaryawan() {
             const tbody = document.getElementById('tbodyKaryawan');
@@ -781,7 +804,7 @@
         }
 
         // ============================================================
-        // RENDER KEUANGAN LAIN
+        // RENDER KEUANGAN LAIN (sama)
         // ============================================================
         function renderOtherTransactions() {
             const tbodyInc = document.getElementById('tbodyIncomeLain');
@@ -818,7 +841,7 @@
         };
 
         // ============================================================
-        // DASHBOARD (tanpa status sumur)
+        // DASHBOARD (sama)
         // ============================================================
         function renderDashboard() {
             const totalAktif = appData.customers.filter(c => c.status === 'aktif').length;
@@ -841,7 +864,7 @@
         }
 
         // ============================================================
-        // CHART
+        // CHART (sama)
         // ============================================================
         function renderChart() {
             const container = document.getElementById('chartContainer');
@@ -910,7 +933,7 @@
         }
 
         // ============================================================
-        // LAPORAN KEUANGAN
+        // LAPORAN KEUANGAN (sama)
         // ============================================================
         function renderLaporan() {
             const jenis = document.getElementById('filterJenis').value;
@@ -946,7 +969,6 @@
 
             const transaksi = [];
 
-            // Tagihan lunas
             appData.payments.filter(p => p.status === 'lunas' && p.tgl_bayar).forEach(p => {
                 const cust = appData.customers.find(c => c.id === p.customer_id);
                 transaksi.push({
@@ -957,8 +979,6 @@
                     pengeluaran: 0
                 });
             });
-
-            // Pemasukan lain
             appData.otherIncomes.forEach(i => {
                 transaksi.push({
                     tanggal: i.tanggal,
@@ -968,8 +988,6 @@
                     pengeluaran: 0
                 });
             });
-
-            // Pengeluaran gaji
             appData.expenses.forEach(e => {
                 const tgl = e.bulan + '-01';
                 transaksi.push({
@@ -980,8 +998,6 @@
                     pengeluaran: e.total
                 });
             });
-
-            // Pengeluaran lain
             appData.otherExpenses.forEach(e => {
                 transaksi.push({
                     tanggal: e.tanggal,
@@ -996,7 +1012,6 @@
                 if (!t.tanggal) return false;
                 return t.tanggal >= tglMulai && t.tanggal <= tglSelesai;
             });
-
             filtered.sort((a, b) => a.tanggal < b.tanggal ? 1 : -1);
 
             let totalPemasukan = 0,
@@ -1033,7 +1048,7 @@
         }
 
         // ============================================================
-        // CRUD PELANGGAN
+        // CRUD PELANGGAN (sama)
         // ============================================================
         function bukaModalPelanggan(id = null) {
             const modal = new bootstrap.Modal(document.getElementById('modalPelanggan'));
@@ -1106,8 +1121,19 @@
         };
 
         // ============================================================
-        // TAGIHAN (manual input pemakaian)
+        // TAGIHAN (dengan meteran awal & akhir)
         // ============================================================
+        function hitungPemakaian() {
+            const awal = parseFloat(document.getElementById('inpMeterAwal').value) || 0;
+            const akhir = parseFloat(document.getElementById('inpMeterAkhir').value) || 0;
+            let pemakaian = 0;
+            if (akhir > awal) {
+                pemakaian = akhir - awal;
+            }
+            document.getElementById('inpTagihanPemakaian').value = pemakaian > 0 ? pemakaian.toFixed(1) : '';
+            hitungTotalTagihan();
+        }
+
         function hitungTotalTagihan() {
             const pemakaian = parseFloat(document.getElementById('inpTagihanPemakaian').value) || 0;
             const tarif = parseInt(document.getElementById('inpTagihanTarif').value) || 0;
@@ -1116,6 +1142,8 @@
             return total;
         }
 
+        document.getElementById('inpMeterAwal').addEventListener('input', hitungPemakaian);
+        document.getElementById('inpMeterAkhir').addEventListener('input', hitungPemakaian);
         document.getElementById('inpTagihanPemakaian').addEventListener('input', hitungTotalTagihan);
         document.getElementById('inpTagihanTarif').addEventListener('input', hitungTotalTagihan);
 
@@ -1133,6 +1161,7 @@
             preview.innerHTML = `<img src="${URL.createObjectURL(file)}" class="meter-preview" />`;
         });
 
+        // Saat modal tambah tagihan dibuka
         document.getElementById('modalTambahTagihan').addEventListener('shown.bs.modal', function() {
             const now = new Date();
             const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -1141,13 +1170,53 @@
             document.getElementById('inpTagihanTarif').value = '10000';
             document.getElementById('inpTagihanTotal').value = '';
             document.getElementById('inpTagihanPemakaian').value = '';
+            document.getElementById('inpMeterAwal').value = '';
+            document.getElementById('inpMeterAkhir').value = '';
             document.getElementById('inpGambarAwal').value = '';
             document.getElementById('inpGambarAkhir').value = '';
             document.getElementById('previewAwal').innerHTML = '';
             document.getElementById('previewAkhir').innerHTML = '';
             populateCustomerDropdown();
+            // Reset state pelanggan terpilih
+            document.getElementById('inpTagihanPelanggan').dataset.prevMeter = '';
         });
 
+        // Saat pelanggan dipilih, cari tagihan terakhir dan isi meteran awal
+        document.getElementById('inpTagihanPelanggan').addEventListener('change', function() {
+            const customerId = parseInt(this.value);
+            if (!customerId) {
+                document.getElementById('inpMeterAwal').value = '';
+                document.getElementById('previewAwal').innerHTML = '';
+                return;
+            }
+            // Cari tagihan terakhir (berdasarkan periode) untuk pelanggan ini
+            const allCustomerPayments = appData.payments.filter(p => p.customer_id === customerId);
+            if (allCustomerPayments.length === 0) {
+                document.getElementById('inpMeterAwal').value = '';
+                document.getElementById('previewAwal').innerHTML = '';
+                return;
+            }
+            // Urutkan berdasarkan periode terbaru
+            allCustomerPayments.sort((a, b) => (a.periode < b.periode ? 1 : -1));
+            const latest = allCustomerPayments[0];
+            if (latest && latest.meter_akhir !== undefined && latest.meter_akhir !== null) {
+                document.getElementById('inpMeterAwal').value = latest.meter_akhir;
+                // Tampilkan gambar akhir bulan lalu sebagai preview awal (jika ada)
+                if (latest.gambar_akhir) {
+                    document.getElementById('previewAwal').innerHTML =
+                        `<img src="${latest.gambar_akhir}" class="meter-preview" /><br/><small class="text-muted">Gambar akhir ${latest.periode}</small>`;
+                } else {
+                    document.getElementById('previewAwal').innerHTML = '';
+                }
+                showToast(`Meteran awal diisi dari tagihan terakhir (${latest.periode})`, 'info');
+            } else {
+                document.getElementById('inpMeterAwal').value = '';
+                document.getElementById('previewAwal').innerHTML = '';
+            }
+            hitungPemakaian();
+        });
+
+        // Upload image function
         function uploadImage(file, path) {
             return new Promise((resolve, reject) => {
                 const ref = storage.ref(path);
@@ -1159,16 +1228,21 @@
             });
         }
 
+        // Simpan tagihan
         document.getElementById('btnSimpanTagihan').addEventListener('click', async function() {
             const customerId = parseInt(document.getElementById('inpTagihanPelanggan').value);
             const periode = document.getElementById('inpTagihanPeriode').value;
             const tarif = parseInt(document.getElementById('inpTagihanTarif').value) || 0;
             const pemakaian = parseFloat(document.getElementById('inpTagihanPemakaian').value) || 0;
+            const meterAwal = parseFloat(document.getElementById('inpMeterAwal').value) || 0;
+            const meterAkhir = parseFloat(document.getElementById('inpMeterAkhir').value) || 0;
             const total = pemakaian * tarif;
 
             if (!customerId) return showToast('Pilih pelanggan!', 'danger');
             if (!periode) return showToast('Pilih periode!', 'danger');
             if (pemakaian <= 0) return showToast('Pemakaian harus lebih dari 0!', 'danger');
+            if (meterAwal === 0 && meterAkhir === 0) return showToast('Masukkan meteran awal dan akhir!', 'danger');
+            if (meterAkhir <= meterAwal) return showToast('Meteran akhir harus lebih besar dari awal!', 'danger');
             if (tarif <= 0) return showToast('Masukkan tarif yang valid!', 'danger');
             if (appData.payments.some(p => p.customer_id === customerId && p.periode === periode)) {
                 return showToast('Tagihan untuk periode ini sudah ada!', 'danger');
@@ -1204,17 +1278,22 @@
                 metode: null,
                 status: 'belum',
                 gambar_awal: urlAwal,
-                gambar_akhir: urlAkhir
+                gambar_akhir: urlAkhir,
+                meter_awal: meterAwal,
+                meter_akhir: meterAkhir
             };
             appData.payments.push(newPayment);
             showToast('Tagihan berhasil ditambahkan!');
             await saveData();
             bootstrap.Modal.getInstance(document.getElementById('modalTambahTagihan')).hide();
+            // Reset form
             document.getElementById('inpTagihanPelanggan').value = '';
             document.getElementById('inpTagihanPeriode').value = '';
             document.getElementById('inpTagihanPemakaian').value = '';
             document.getElementById('inpTagihanTarif').value = '10000';
             document.getElementById('inpTagihanTotal').value = '';
+            document.getElementById('inpMeterAwal').value = '';
+            document.getElementById('inpMeterAkhir').value = '';
             document.getElementById('inpGambarAwal').value = '';
             document.getElementById('inpGambarAkhir').value = '';
             document.getElementById('previewAwal').innerHTML = '';
@@ -1222,7 +1301,7 @@
         });
 
         // ============================================================
-        // BAYAR TAGIHAN
+        // BAYAR TAGIHAN (sama)
         // ============================================================
         window.bukaModalBayar = function(paymentId) {
             const p = appData.payments.find(pay => pay.id === paymentId);
@@ -1253,7 +1332,7 @@
         });
 
         // ============================================================
-        // KARYAWAN
+        // KARYAWAN (sama)
         // ============================================================
         function bukaModalKaryawan(id = null) {
             const modal = new bootstrap.Modal(document.getElementById('modalKaryawan'));
@@ -1346,7 +1425,7 @@
         });
 
         // ============================================================
-        // KEUANGAN LAIN
+        // KEUANGAN LAIN (sama)
         // ============================================================
         document.getElementById('btnSimpanIncomeLain').addEventListener('click', async function() {
             const tanggal = document.getElementById('inpIncomeTgl').value;
@@ -1388,7 +1467,7 @@
         });
 
         // ============================================================
-        // AKSES PELANGGAN
+        // AKSES PELANGGAN (sama)
         // ============================================================
         function tampilkanDetailPelangganCustomer(id) {
             const cust = appData.customers.find(c => c.id === id);
@@ -1499,7 +1578,6 @@
             renderPelanggan();
         });
 
-        // Filter laporan: toggle tanggal custom
         document.getElementById('filterJenis').addEventListener('change', function() {
             const val = this.value;
             const tglMulai = document.getElementById('filterTglMulai');
