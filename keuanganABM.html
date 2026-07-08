@@ -6,11 +6,11 @@
     <title>Keuangan Air Bersih Mauluddaras</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-storage-compat.js"></script>
     <style>
-        /* ===== STYLE SAMA ===== */
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; background:#f4f7fc; }
         .sidebar { height:100vh; width:250px; position:fixed; top:0; left:0; background:linear-gradient(180deg,#0a3d62,#1a6b8a); padding-top:20px; color:#fff; z-index:1000; box-shadow:2px 0 10px rgba(0,0,0,0.2); overflow-y:auto; }
@@ -47,7 +47,6 @@
         .search-box input { border-radius:20px 0 0 20px; border-right:none; }
         .search-box .btn { border-radius:0 20px 20px 0; }
         .meter-preview { max-width:120px; max-height:120px; border-radius:6px; border:1px solid #ddd; margin-top:5px; }
-        .ocr-result { font-weight:bold; color:#0a3d62; }
         .filter-group { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
         .filter-group select, .filter-group input { padding:6px 12px; border-radius:6px; border:1px solid #ddd; }
         .laporan-card { background:#fff; border-radius:12px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.06); margin-bottom:20px; }
@@ -57,6 +56,8 @@
         .laporan-ringkasan .item .value { font-size:22px; font-weight:700; color:#0a3d62; }
         .laporan-ringkasan .item.positif .value { color:#28a745; }
         .laporan-ringkasan .item.negatif .value { color:#dc3545; }
+        /* Tambahan untuk responsif tabel */
+        .table-responsive { overflow-x:auto; -webkit-overflow-scrolling:touch; }
     </style>
 </head>
 <body>
@@ -78,7 +79,7 @@
             <a class="nav-link" data-page="keuangan-lain"><i class="fas fa-exchange-alt"></i> <span>Keuangan Lain</span></a>
             <a class="nav-link" data-page="laporan"><i class="fas fa-chart-pie"></i> <span>Laporan Keuangan</span></a>
             <a class="nav-link" data-page="akses-pelanggan"><i class="fas fa-user-check"></i> <span>Akses Pelanggan</span></a>
-            <hr style="border-color:rgba(255,255,255,0.1); margin:20px 10px;" />
+            <!-- Reset Data sudah dihapus -->
         </nav>
     </div>
 
@@ -152,10 +153,12 @@
                     <div class="card">
                         <div class="card-header bg-white fw-bold">📋 Tagihan Belum Lunas</div>
                         <div class="card-body p-0">
-                            <table class="table table-sm m-0">
-                                <thead><tr><th>Pelanggan</th><th>Periode</th><th>Pemakaian (m³)</th><th>Tarif/m³</th><th>Total</th><th>Status</th><th>Aksi</th></tr></thead>
-                                <tbody id="tbodyTagihanBelum"></tbody>
-                            </table>
+                            <div class="table-responsive">
+                                <table class="table table-sm m-0">
+                                    <thead><tr><th>Pelanggan</th><th>Periode</th><th>Pemakaian (m³)</th><th>Tarif/m³</th><th>Total</th><th>Status</th><th>Aksi</th></tr></thead>
+                                    <tbody id="tbodyTagihanBelum"></tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -165,10 +168,12 @@
                     <div class="card">
                         <div class="card-header bg-white fw-bold">✅ Riwayat Pembayaran</div>
                         <div class="card-body p-0">
-                            <table class="table table-sm m-0">
-                                <thead><tr><th>Pelanggan</th><th>Periode</th><th>Pemakaian (m³)</th><th>Jumlah Dibayar</th><th>Metode</th><th>Tgl Bayar</th></tr></thead>
-                                <tbody id="tbodyRiwayatBayar"></tbody>
-                            </table>
+                            <div class="table-responsive">
+                                <table class="table table-sm m-0">
+                                    <thead><tr><th>Pelanggan</th><th>Periode</th><th>Pemakaian (m³)</th><th>Jumlah Dibayar</th><th>Metode</th><th>Tgl Bayar</th></tr></thead>
+                                    <tbody id="tbodyRiwayatBayar"></tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -183,10 +188,12 @@
             </div>
             <div class="card">
                 <div class="card-body p-0">
-                    <table class="table table-hover m-0">
-                        <thead><tr><th>Nama</th><th>Jabatan</th><th>Gaji Pokok</th><th>Tunjangan</th><th>Potongan</th><th>Gaji Bersih</th><th>Status</th><th>Aksi</th></tr></thead>
-                        <tbody id="tbodyKaryawan"></tbody>
-                    </table>
+                    <div class="table-responsive">
+                        <table class="table table-hover m-0">
+                            <thead><tr><th>Nama</th><th>Jabatan</th><th>Gaji Pokok</th><th>Tunjangan</th><th>Potongan</th><th>Gaji Bersih</th><th>Status</th><th>Aksi</th></tr></thead>
+                            <tbody id="tbodyKaryawan"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
             <div class="mt-2" id="totalGajiDisplay"></div>
@@ -206,10 +213,12 @@
                     <div class="card border-success">
                         <div class="card-header bg-success text-white">Pemasukan Lain</div>
                         <div class="card-body p-0">
-                            <table class="table table-sm m-0">
-                                <thead><tr><th>Tanggal</th><th>Kategori</th><th>Deskripsi</th><th>Jumlah</th><th>Aksi</th></tr></thead>
-                                <tbody id="tbodyIncomeLain"></tbody>
-                            </table>
+                            <div class="table-responsive">
+                                <table class="table table-sm m-0">
+                                    <thead><tr><th>Tanggal</th><th>Kategori</th><th>Deskripsi</th><th>Jumlah</th><th>Aksi</th></tr></thead>
+                                    <tbody id="tbodyIncomeLain"></tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -217,10 +226,12 @@
                     <div class="card border-danger">
                         <div class="card-header bg-danger text-white">Pengeluaran Lain</div>
                         <div class="card-body p-0">
-                            <table class="table table-sm m-0">
-                                <thead><tr><th>Tanggal</th><th>Kategori</th><th>Deskripsi</th><th>Jumlah</th><th>Aksi</th></tr></thead>
-                                <tbody id="tbodyExpenseLain"></tbody>
-                            </table>
+                            <div class="table-responsive">
+                                <table class="table table-sm m-0">
+                                    <thead><tr><th>Tanggal</th><th>Kategori</th><th>Deskripsi</th><th>Jumlah</th><th>Aksi</th></tr></thead>
+                                    <tbody id="tbodyExpenseLain"></tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -296,10 +307,12 @@
                                 <div class="card">
                                     <div class="card-header bg-light">📜 Riwayat Pembayaran</div>
                                     <div class="card-body p-0">
-                                        <table class="table table-sm m-0">
-                                            <thead><tr><th>Periode</th><th>Pemakaian</th><th>Jumlah</th><th>Status</th></tr></thead>
-                                            <tbody id="custRiwayatTable"></tbody>
-                                        </table>
+                                        <div class="table-responsive">
+                                            <table class="table table-sm m-0">
+                                                <thead><tr><th>Periode</th><th>Pemakaian</th><th>Jumlah</th><th>Status</th></tr></thead>
+                                                <tbody id="custRiwayatTable"></tbody>
+                                            </table>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -311,6 +324,7 @@
     </div>
 
     <!-- ===== MODALS ===== -->
+
     <!-- Modal Pelanggan -->
     <div class="modal fade" id="modalPelanggan" tabindex="-1">
         <div class="modal-dialog">
@@ -331,7 +345,7 @@
         </div>
     </div>
 
-    <!-- Modal Tambah Tagihan -->
+    <!-- Modal Tambah Tagihan (manual input pemakaian) -->
     <div class="modal fade" id="modalTambahTagihan" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -342,21 +356,21 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-2">
-                                <label>Gambar Meteran Awal</label>
+                                <label>Gambar Meteran Awal <span class="text-muted">(opsional)</span></label>
                                 <input type="file" class="form-control" id="inpGambarAwal" accept="image/*" />
                                 <div id="previewAwal" class="mt-1"></div>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-2">
-                                <label>Gambar Meteran Akhir</label>
+                                <label>Gambar Meteran Akhir <span class="text-muted">(opsional)</span></label>
                                 <input type="file" class="form-control" id="inpGambarAkhir" accept="image/*" />
                                 <div id="previewAkhir" class="mt-1"></div>
                             </div>
                         </div>
                     </div>
-                    <div class="mb-2"><label>Pemakaian (m³) <span class="text-muted">(isi manual)</span></label>
-                        <input type="number" class="form-control" id="inpTagihanPemakaian" step="0.1" placeholder="Masukkan angka pemakaian" />
+                    <div class="mb-2"><label>Pemakaian (m³) <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="inpTagihanPemakaian" step="0.1" placeholder="Masukkan angka pemakaian" required />
                     </div>
                     <div class="mb-2"><label>Tarif per m³ (Rp)</label><input type="number" class="form-control" id="inpTagihanTarif" value="10000" step="1000" /></div>
                     <div class="mb-2"><label>Total Tagihan (Rp)</label><input type="text" class="form-control" id="inpTagihanTotal" readonly style="background:#e9ecef;" /></div>
@@ -899,7 +913,6 @@
         // LAPORAN KEUANGAN
         // ============================================================
         function renderLaporan() {
-            // Cari filter yang dipilih
             const jenis = document.getElementById('filterJenis').value;
             let tglMulai, tglSelesai;
             const now = new Date();
@@ -926,15 +939,14 @@
                 const year = now.getFullYear();
                 tglMulai = `${year}-01-01`;
                 tglSelesai = `${year}-12-31`;
-            } else { // custom
+            } else {
                 tglMulai = document.getElementById('filterTglMulai').value || today;
                 tglSelesai = document.getElementById('filterTglSelesai').value || today;
             }
 
-            // Kumpulkan semua transaksi
             const transaksi = [];
 
-            // 1. Tagihan lunas (pendapatan)
+            // Tagihan lunas
             appData.payments.filter(p => p.status === 'lunas' && p.tgl_bayar).forEach(p => {
                 const cust = appData.customers.find(c => c.id === p.customer_id);
                 transaksi.push({
@@ -946,7 +958,7 @@
                 });
             });
 
-            // 2. Pemasukan lain
+            // Pemasukan lain
             appData.otherIncomes.forEach(i => {
                 transaksi.push({
                     tanggal: i.tanggal,
@@ -957,9 +969,8 @@
                 });
             });
 
-            // 3. Pengeluaran gaji (dari expenses)
+            // Pengeluaran gaji
             appData.expenses.forEach(e => {
-                // expenses hanya simpan bulan, kita asumsikan tanggal 1 bulan tersebut
                 const tgl = e.bulan + '-01';
                 transaksi.push({
                     tanggal: tgl,
@@ -970,7 +981,7 @@
                 });
             });
 
-            // 4. Pengeluaran lain
+            // Pengeluaran lain
             appData.otherExpenses.forEach(e => {
                 transaksi.push({
                     tanggal: e.tanggal,
@@ -981,16 +992,13 @@
                 });
             });
 
-            // Filter berdasarkan tanggal
             const filtered = transaksi.filter(t => {
                 if (!t.tanggal) return false;
                 return t.tanggal >= tglMulai && t.tanggal <= tglSelesai;
             });
 
-            // Urutkan berdasarkan tanggal terbaru
             filtered.sort((a, b) => a.tanggal < b.tanggal ? 1 : -1);
 
-            // Hitung total
             let totalPemasukan = 0,
                 totalPengeluaran = 0;
             filtered.forEach(t => {
@@ -999,7 +1007,6 @@
             });
             const saldo = totalPemasukan - totalPengeluaran;
 
-            // Update ringkasan
             document.getElementById('lapPendapatan').textContent = formatRupiah(totalPemasukan);
             document.getElementById('lapPengeluaran').textContent = formatRupiah(totalPengeluaran);
             const saldoEl = document.getElementById('lapSaldo');
@@ -1008,7 +1015,6 @@
             box.className = 'item ' + (saldo >= 0 ? 'positif' : 'negatif');
             document.getElementById('lapJumlahTransaksi').textContent = filtered.length;
 
-            // Tabel detail
             const tbody = document.getElementById('tbodyLaporan');
             tbody.innerHTML = '';
             if (filtered.length === 0) {
@@ -1142,7 +1148,6 @@
             populateCustomerDropdown();
         });
 
-        // Upload gambar ke Firebase Storage
         function uploadImage(file, path) {
             return new Promise((resolve, reject) => {
                 const ref = storage.ref(path);
@@ -1451,7 +1456,7 @@
         });
 
         // ============================================================
-        // RESET, NAVIGASI, SEARCH, INIT
+        // NAVIGASI, SEARCH, INIT
         // ============================================================
         document.querySelectorAll('.sidebar .nav-link[data-page]').forEach(link => {
             link.addEventListener('click', function(e) {
@@ -1502,7 +1507,6 @@
             if (val === 'custom') {
                 tglMulai.style.display = 'inline-block';
                 tglSelesai.style.display = 'inline-block';
-                // isi default dengan tanggal hari ini
                 const today = new Date().toISOString().split('T')[0];
                 tglMulai.value = today;
                 tglSelesai.value = today;
