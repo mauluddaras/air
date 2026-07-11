@@ -6,7 +6,6 @@
     <title>Keuangan Air Bersih Mauluddaras</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-storage-compat.js"></script>
@@ -57,8 +56,13 @@
         .laporan-ringkasan .item.positif .value { color:#28a745; }
         .laporan-ringkasan .item.negatif .value { color:#dc3545; }
         .table-responsive { overflow-x:auto; -webkit-overflow-scrolling:touch; }
-        .meter-input-group { display:flex; gap:10px; }
-        .meter-input-group .form-group { flex:1; }
+        .limit-dropdown { display:inline-block; margin-left:15px; }
+        .limit-dropdown select { padding:4px 8px; border-radius:6px; border:1px solid #ddd; font-size:14px; }
+        .info-data { font-size:14px; color:#6c757d; margin-left:10px; }
+        .pagination-wrapper { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; padding:10px 15px; background:#f8f9fa; border-top:1px solid #dee2e6; }
+        .pagination-wrapper .info-kode { font-weight:600; color:#0a3d62; }
+        .pagination-wrapper .pagination-nav { display:flex; gap:8px; align-items:center; }
+        .pagination-wrapper .pagination-nav button { min-width:80px; }
     </style>
 </head>
 <body>
@@ -93,7 +97,7 @@
             </div>
         </div>
 
-        <!-- DASHBOARD -->
+        <!-- ===== DASHBOARD ===== -->
         <div id="page-dashboard" class="page-content active">
             <div class="row g-4" id="dashboardStats">
                 <div class="col-md-3"><div class="stat-card"><div class="number" id="statPelanggan">0</div><div class="label">Total Pelanggan Aktif</div></div></div>
@@ -117,14 +121,23 @@
             </div>
         </div>
 
-        <!-- PELANGGAN -->
+        <!-- ===== PELANGGAN (dengan pagination) ===== -->
         <div id="page-pelanggan" class="page-content">
             <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
                 <h5><i class="fas fa-users me-2"></i>Daftar Pelanggan</h5>
-                <div class="d-flex gap-2">
+                <div class="d-flex gap-2 align-items-center flex-wrap">
                     <div class="input-group search-box">
-                        <input type="text" class="form-control" id="searchPelanggan" placeholder="Cari nama, sambungan, alamat, telp..." />
+                        <input type="text" class="form-control" id="searchPelanggan" placeholder="Cari..." />
                         <button class="btn btn-outline-secondary" type="button" id="btnClearSearch"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="limit-dropdown">
+                        <label class="small">Tampilkan</label>
+                        <select id="limitPelanggan">
+                            <option value="5">5</option>
+                            <option value="10" selected>10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                        </select>
                     </div>
                     <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalPelanggan"><i class="fas fa-plus"></i> Tambah</button>
                 </div>
@@ -137,12 +150,23 @@
                             <tbody id="tbodyPelanggan"></tbody>
                         </table>
                     </div>
+                    <!-- Pagination & Info -->
+                    <div class="pagination-wrapper" id="paginationPelanggan">
+                        <div class="info-kode">
+                            <i class="fas fa-tag"></i> Kode sambung tertinggi: <span id="kodeTertinggi">-</span>
+                        </div>
+                        <div class="pagination-nav">
+                            <button class="btn btn-sm btn-outline-secondary" id="prevPagePelanggan" disabled><i class="fas fa-chevron-left"></i> Sebelumnya</button>
+                            <span id="pageInfoPelanggan" class="mx-2">Halaman 1 dari 1</span>
+                            <button class="btn btn-sm btn-outline-secondary" id="nextPagePelanggan"><i class="fas fa-chevron-right"></i> Selanjutnya</button>
+                        </div>
+                    </div>
+                    <div class="p-2 text-muted small" id="infoPelanggan"></div>
                 </div>
             </div>
-            <div class="mt-2 text-muted small"><i class="fas fa-info-circle"></i> Klik <strong>Nonaktifkan/Aktifkan</strong> untuk mengubah status.</div>
         </div>
 
-        <!-- TAGIHAN -->
+        <!-- ===== TAGIHAN ===== -->
         <div id="page-tagihan" class="page-content">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5><i class="fas fa-file-invoice me-2"></i>Tagihan &amp; Pembayaran</h5>
@@ -151,7 +175,19 @@
             <div class="row mt-3">
                 <div class="col-md-12">
                     <div class="card">
-                        <div class="card-header bg-white fw-bold">📋 Tagihan Belum Lunas</div>
+                        <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center flex-wrap">
+                            <span>📋 Tagihan Belum Lunas</span>
+                            <div class="limit-dropdown">
+                                <label class="small">Tampilkan</label>
+                                <select id="limitTagihanBelum">
+                                    <option value="10">10</option>
+                                    <option value="25" selected>25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                    <option value="999999">Semua</option>
+                                </select>
+                            </div>
+                        </div>
                         <div class="card-body p-0">
                             <div class="table-responsive">
                                 <table class="table table-sm m-0">
@@ -159,6 +195,7 @@
                                     <tbody id="tbodyTagihanBelum"></tbody>
                                 </table>
                             </div>
+                            <div class="p-2 text-muted small" id="infoTagihanBelum"></div>
                         </div>
                     </div>
                 </div>
@@ -166,7 +203,19 @@
             <div class="row mt-3">
                 <div class="col-md-12">
                     <div class="card">
-                        <div class="card-header bg-white fw-bold">✅ Riwayat Pembayaran</div>
+                        <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center flex-wrap">
+                            <span>✅ Riwayat Pembayaran</span>
+                            <div class="limit-dropdown">
+                                <label class="small">Tampilkan</label>
+                                <select id="limitRiwayat">
+                                    <option value="5">5</option>
+                                    <option value="10" selected>10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                    <option value="999999">Semua</option>
+                                </select>
+                            </div>
+                        </div>
                         <div class="card-body p-0">
                             <div class="table-responsive">
                                 <table class="table table-sm m-0">
@@ -174,17 +223,30 @@
                                     <tbody id="tbodyRiwayatBayar"></tbody>
                                 </table>
                             </div>
+                            <div class="p-2 text-muted small" id="infoRiwayat"></div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- PENGGAJIAN -->
+        <!-- ===== PENGGAJIAN ===== -->
         <div id="page-penggajian" class="page-content">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5><i class="fas fa-wallet me-2"></i>Penggajian Karyawan</h5>
-                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalKaryawan"><i class="fas fa-plus"></i> Tambah Karyawan</button>
+                <div class="d-flex gap-2 align-items-center">
+                    <div class="limit-dropdown">
+                        <label class="small">Tampilkan</label>
+                        <select id="limitKaryawan">
+                            <option value="10">10</option>
+                            <option value="25" selected>25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                            <option value="999999">Semua</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalKaryawan"><i class="fas fa-plus"></i> Tambah Karyawan</button>
+                </div>
             </div>
             <div class="card">
                 <div class="card-body p-0">
@@ -194,12 +256,13 @@
                             <tbody id="tbodyKaryawan"></tbody>
                         </table>
                     </div>
+                    <div class="p-2 text-muted small" id="infoKaryawan"></div>
                 </div>
             </div>
             <div class="mt-2" id="totalGajiDisplay"></div>
         </div>
 
-        <!-- KEUANGAN LAIN -->
+        <!-- ===== KEUANGAN LAIN ===== -->
         <div id="page-keuangan-lain" class="page-content">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5><i class="fas fa-exchange-alt me-2"></i>Pemasukan &amp; Pengeluaran Lain</h5>
@@ -211,7 +274,19 @@
             <div class="row">
                 <div class="col-md-6">
                     <div class="card border-success">
-                        <div class="card-header bg-success text-white">Pemasukan Lain</div>
+                        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                            <span>Pemasukan Lain</span>
+                            <div class="limit-dropdown">
+                                <label class="small text-white">Tampilkan</label>
+                                <select id="limitIncome" style="background:#fff;border:none;">
+                                    <option value="10">10</option>
+                                    <option value="25" selected>25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                    <option value="999999">Semua</option>
+                                </select>
+                            </div>
+                        </div>
                         <div class="card-body p-0">
                             <div class="table-responsive">
                                 <table class="table table-sm m-0">
@@ -219,12 +294,25 @@
                                     <tbody id="tbodyIncomeLain"></tbody>
                                 </table>
                             </div>
+                            <div class="p-2 text-muted small" id="infoIncome"></div>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="card border-danger">
-                        <div class="card-header bg-danger text-white">Pengeluaran Lain</div>
+                        <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+                            <span>Pengeluaran Lain</span>
+                            <div class="limit-dropdown">
+                                <label class="small text-white">Tampilkan</label>
+                                <select id="limitExpense" style="background:#fff;border:none;">
+                                    <option value="10">10</option>
+                                    <option value="25" selected>25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                    <option value="999999">Semua</option>
+                                </select>
+                            </div>
+                        </div>
                         <div class="card-body p-0">
                             <div class="table-responsive">
                                 <table class="table table-sm m-0">
@@ -232,13 +320,14 @@
                                     <tbody id="tbodyExpenseLain"></tbody>
                                 </table>
                             </div>
+                            <div class="p-2 text-muted small" id="infoExpense"></div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- LAPORAN KEUANGAN -->
+        <!-- ===== LAPORAN KEUANGAN ===== -->
         <div id="page-laporan" class="page-content">
             <h5><i class="fas fa-chart-pie me-2"></i>Laporan Keuangan</h5>
             <div class="laporan-card">
@@ -254,6 +343,16 @@
                     <input type="date" id="filterTglMulai" style="display:none;" />
                     <input type="date" id="filterTglSelesai" style="display:none;" />
                     <button class="btn btn-primary" id="btnFilterLaporan"><i class="fas fa-filter"></i> Tampilkan</button>
+                    <div class="limit-dropdown">
+                        <label class="small">Tampilkan</label>
+                        <select id="limitLaporan">
+                            <option value="10">10</option>
+                            <option value="25" selected>25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                            <option value="999999">Semua</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="laporan-ringkasan" id="laporanRingkasan">
                     <div class="item"><div class="label">Total Pendapatan</div><div class="value" id="lapPendapatan">Rp 0</div></div>
@@ -271,11 +370,12 @@
                             <tbody id="tbodyLaporan"></tbody>
                         </table>
                     </div>
+                    <div class="p-2 text-muted small" id="infoLaporan"></div>
                 </div>
             </div>
         </div>
 
-        <!-- AKSES PELANGGAN -->
+        <!-- ===== AKSES PELANGGAN ===== -->
         <div id="page-akses-pelanggan" class="page-content">
             <div class="customer-view">
                 <h4 class="mb-3"><i class="fas fa-user-lock me-2"></i> Akses Pelanggan</h4>
@@ -321,7 +421,6 @@
     </div>
 
     <!-- ===== MODALS ===== -->
-
     <!-- Modal Pelanggan -->
     <div class="modal fade" id="modalPelanggan" tabindex="-1">
         <div class="modal-dialog">
@@ -342,7 +441,7 @@
         </div>
     </div>
 
-    <!-- Modal Tambah Tagihan (dengan meteran awal dan akhir) -->
+    <!-- Modal Tambah Tagihan -->
     <div class="modal fade" id="modalTambahTagihan" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -350,24 +449,16 @@
                 <div class="modal-body">
                     <div class="mb-2"><label>Pelanggan</label><select class="form-select" id="inpTagihanPelanggan"><option value="">-- Pilih Pelanggan --</option></select></div>
                     <div class="mb-2"><label>Periode (Bulan-Tahun)</label><input type="month" class="form-control" id="inpTagihanPeriode" /></div>
-
-                    <!-- Meteran Awal dan Akhir -->
                     <div class="row">
                         <div class="col-md-6">
-                            <div class="mb-2">
-                                <label>Meteran Awal (m³) <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="inpMeterAwal" step="0.1" placeholder="0" required />
-                            </div>
+                            <div class="mb-2"><label>Meteran Awal (m³) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="inpMeterAwal" step="0.1" placeholder="0" required /></div>
                         </div>
                         <div class="col-md-6">
-                            <div class="mb-2">
-                                <label>Meteran Akhir (m³) <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="inpMeterAkhir" step="0.1" placeholder="0" required />
-                            </div>
+                            <div class="mb-2"><label>Meteran Akhir (m³) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="inpMeterAkhir" step="0.1" placeholder="0" required /></div>
                         </div>
                     </div>
-
-                    <!-- Upload Gambar -->
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-2">
@@ -384,10 +475,8 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="mb-2"><label>Pemakaian (m³) <span class="text-danger">*</span></label>
-                        <input type="number" class="form-control" id="inpTagihanPemakaian" step="0.1" placeholder="Otomatis dari selisih" />
-                    </div>
+                        <input type="number" class="form-control" id="inpTagihanPemakaian" step="0.1" placeholder="Otomatis dari selisih" /></div>
                     <div class="mb-2"><label>Tarif per m³ (Rp)</label><input type="number" class="form-control" id="inpTagihanTarif" value="10000" step="1000" /></div>
                     <div class="mb-2"><label>Total Tagihan (Rp)</label><input type="text" class="form-control" id="inpTagihanTotal" readonly style="background:#e9ecef;" /></div>
                 </div>
@@ -517,6 +606,12 @@
         const storage = firebase.storage();
 
         let appData = { customers: [], payments: [], employees: [], expenses: [], otherIncomes: [], otherExpenses: [] };
+
+        // ============================================================
+        // PAGINATION STATE
+        // ============================================================
+        let currentPagePelanggan = 1;
+        const itemsPerPagePelanggan = 10; // default, akan diambil dari dropdown
 
         // ============================================================
         // DATA FUNCTIONS
@@ -649,6 +744,24 @@
         }
 
         // ============================================================
+        // HELPER: KODE SAMBUNG TERTINGGI
+        // ============================================================
+        function getKodeTertinggi() {
+            if (!appData.customers.length) return 'SB-000';
+            // Cari nomor sambungan tertinggi
+            const numbers = appData.customers
+                .map(c => {
+                    const s = c.no_sambungan || 'SB-000';
+                    const num = parseInt(s.replace(/\D/g, '')) || 0;
+                    return num;
+                })
+                .filter(n => !isNaN(n) && n > 0);
+            if (numbers.length === 0) return 'SB-000';
+            const max = Math.max(...numbers);
+            return 'SB-' + String(max).padStart(3, '0');
+        }
+
+        // ============================================================
         // RENDER ALL
         // ============================================================
         function renderAll() {
@@ -684,11 +797,96 @@
         }
 
         // ============================================================
-        // RENDER PELANGGAN
+        // RENDER PELANGGAN (dengan pagination)
         // ============================================================
         function renderPelanggan() {
             const tbody = document.getElementById('tbodyPelanggan');
             if (!tbody) return;
+
+            // Ambil keyword pencarian
+            const keyword = document.getElementById('searchPelanggan').value.trim().toLowerCase();
+
+            // Filter data
+            let filtered = appData.customers;
+            if (keyword) {
+                filtered = appData.customers.filter(c => {
+                    const noSamb = (c.no_sambungan || 'SB-' + String(c.id).padStart(3, '0')).toLowerCase();
+                    const nama = (c.nama || '').toLowerCase();
+                    const alamat = (c.alamat || '').toLowerCase();
+                    const telp = (c.telp || '').toLowerCase();
+                    return noSamb.includes(keyword) || nama.includes(keyword) || alamat.includes(keyword) || telp.includes(
+                        keyword);
+                });
+            }
+
+            // Ambil items per page dari dropdown
+            const limitSelect = document.getElementById('limitPelanggan');
+            const itemsPerPage = parseInt(limitSelect.value) || 10;
+
+            // Hitung total halaman
+            const totalItems = filtered.length;
+            const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+
+            // Pastikan halaman saat ini valid
+            if (currentPagePelanggan > totalPages) currentPagePelanggan = totalPages;
+            if (currentPagePelanggan < 1) currentPagePelanggan = 1;
+
+            // Ambil data untuk halaman saat ini
+            const startIndex = (currentPagePelanggan - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+            const pageData = filtered.slice(startIndex, endIndex);
+
+            // Render tabel
+            tbody.innerHTML = '';
+            if (pageData.length === 0) {
+                tbody.innerHTML =
+                    `<tr><td colspan="6" class="text-center text-muted py-3">Tidak ada pelanggan yang cocok.</td></tr>`;
+            } else {
+                pageData.forEach(c => {
+                    const noSamb = c.no_sambungan || 'SB-' + String(c.id).padStart(3, '0');
+                    const statusBadge = c.status === 'aktif' ? '<span class="badge bg-success">Aktif</span>' :
+                        '<span class="badge bg-danger">Nonaktif</span>';
+                    const toggleBtn = c.status === 'aktif' ?
+                        `<button class="btn btn-warning btn-sm" onclick="toggleStatusPelanggan(${c.id})"><i class="fas fa-pause"></i> Nonaktifkan</button>` :
+                        `<button class="btn btn-success btn-sm" onclick="toggleStatusPelanggan(${c.id})"><i class="fas fa-play"></i> Aktifkan</button>`;
+                    tbody.innerHTML += `<tr>
+                        <td>${noSamb}</td><td>${c.nama}</td><td>${c.alamat}</td><td>${c.telp}</td>
+                        <td>${statusBadge}</td>
+                        <td>
+                            <button class="btn btn-primary btn-sm" onclick="editPelanggan(${c.id})"><i class="fas fa-edit"></i></button>
+                            ${toggleBtn}
+                            <button class="btn btn-danger btn-sm" onclick="hapusPelanggan(${c.id})"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>`;
+                });
+            }
+
+            // Update info total data
+            document.getElementById('infoPelanggan').innerText =
+                `Menampilkan ${pageData.length} dari ${totalItems} data${keyword ? ' (hasil pencarian)' : ''}`;
+
+            // Update kode sambung tertinggi
+            document.getElementById('kodeTertinggi').innerText = getKodeTertinggi();
+
+            // Update pagination controls
+            document.getElementById('pageInfoPelanggan').innerText = `Halaman ${currentPagePelanggan} dari ${totalPages}`;
+            document.getElementById('prevPagePelanggan').disabled = (currentPagePelanggan <= 1);
+            document.getElementById('nextPagePelanggan').disabled = (currentPagePelanggan >= totalPages);
+        }
+
+        // ============================================================
+        // PAGINATION EVENT LISTENERS
+        // ============================================================
+        document.getElementById('prevPagePelanggan').addEventListener('click', function() {
+            if (currentPagePelanggan > 1) {
+                currentPagePelanggan--;
+                renderPelanggan();
+            }
+        });
+
+        document.getElementById('nextPagePelanggan').addEventListener('click', function() {
+            const limitSelect = document.getElementById('limitPelanggan');
+            const itemsPerPage = parseInt(limitSelect.value) || 10;
             const keyword = document.getElementById('searchPelanggan').value.trim().toLowerCase();
             let filtered = appData.customers;
             if (keyword) {
@@ -701,74 +899,101 @@
                         keyword);
                 });
             }
-            tbody.innerHTML = '';
-            if (filtered.length === 0) {
-                tbody.innerHTML =
-                    `<tr><td colspan="6" class="text-center text-muted py-3">Tidak ada pelanggan yang cocok.</td></tr>`;
-                return;
+            const totalPages = Math.ceil(filtered.length / itemsPerPage) || 1;
+            if (currentPagePelanggan < totalPages) {
+                currentPagePelanggan++;
+                renderPelanggan();
             }
-            filtered.forEach(c => {
-                const noSamb = c.no_sambungan || 'SB-' + String(c.id).padStart(3, '0');
-                const statusBadge = c.status === 'aktif' ? '<span class="badge bg-success">Aktif</span>' :
-                    '<span class="badge bg-danger">Nonaktif</span>';
-                const toggleBtn = c.status === 'aktif' ?
-                    `<button class="btn btn-warning btn-sm" onclick="toggleStatusPelanggan(${c.id})"><i class="fas fa-pause"></i> Nonaktifkan</button>` :
-                    `<button class="btn btn-success btn-sm" onclick="toggleStatusPelanggan(${c.id})"><i class="fas fa-play"></i> Aktifkan</button>`;
-                tbody.innerHTML += `<tr>
-                    <td>${noSamb}</td><td>${c.nama}</td><td>${c.alamat}</td><td>${c.telp}</td>
-                    <td>${statusBadge}</td>
-                    <td>
-                        <button class="btn btn-primary btn-sm" onclick="editPelanggan(${c.id})"><i class="fas fa-edit"></i></button>
-                        ${toggleBtn}
-                        <button class="btn btn-danger btn-sm" onclick="hapusPelanggan(${c.id})"><i class="fas fa-trash"></i></button>
-                    </td>
-                </tr>`;
-            });
-        }
+        });
+
+        // Reset ke halaman 1 saat limit berubah atau pencarian berubah
+        document.getElementById('limitPelanggan').addEventListener('change', function() {
+            currentPagePelanggan = 1;
+            renderPelanggan();
+        });
+
+        document.getElementById('searchPelanggan').addEventListener('input', function() {
+            currentPagePelanggan = 1;
+            renderPelanggan();
+        });
+
+        document.getElementById('btnClearSearch').addEventListener('click', function() {
+            document.getElementById('searchPelanggan').value = '';
+            currentPagePelanggan = 1;
+            renderPelanggan();
+        });
 
         // ============================================================
-        // RENDER TAGIHAN (ditambah kolom Meteran Awal/Akhir jika perlu)
+        // RENDER TAGIHAN
         // ============================================================
         function renderTagihan() {
             const tbodyBelum = document.getElementById('tbodyTagihanBelum');
             const tbodyRiwayat = document.getElementById('tbodyRiwayatBayar');
             if (!tbodyBelum || !tbodyRiwayat) return;
+
+            // Tagihan Belum Lunas
+            const belum = appData.payments.filter(p => p.status === 'belum');
+            const limitedBelum = applyLimit(belum, 'limitTagihanBelum');
             tbodyBelum.innerHTML = '';
-            tbodyRiwayat.innerHTML = '';
-
-            appData.payments.filter(p => p.status === 'belum').forEach(p => {
-                const cust = appData.customers.find(c => c.id === p.customer_id);
-                let nama = cust ? cust.nama : 'Unknown';
-                let warning = '';
-                if (cust && cust.status === 'nonaktif') warning = ' <span class="badge bg-danger">Nonaktif</span>';
-                tbodyBelum.innerHTML += `<tr>
-                    <td>${nama} ${warning}</td>
-                    <td>${p.periode}</td>
-                    <td>${p.pemakaian || 0}</td>
-                    <td>Rp ${(p.tarif || 10000).toLocaleString()}</td>
-                    <td>Rp ${p.jumlah.toLocaleString()}</td>
-                    <td><span class="badge bg-danger">Belum Bayar</span></td>
-                    <td><button class="btn btn-success btn-sm" onclick="bukaModalBayar(${p.id})"><i class="fas fa-check"></i> Bayar</button></td>
-                </tr>`;
-            });
-            if (appData.payments.filter(p => p.status === 'belum').length === 0) {
+            if (limitedBelum.length === 0) {
                 tbodyBelum.innerHTML = '<tr><td colspan="7" class="text-muted">Semua tagihan sudah lunas.</td></tr>';
+            } else {
+                limitedBelum.forEach(p => {
+                    const cust = appData.customers.find(c => c.id === p.customer_id);
+                    let nama = cust ? cust.nama : 'Unknown';
+                    let warning = '';
+                    if (cust && cust.status === 'nonaktif') warning = ' <span class="badge bg-danger">Nonaktif</span>';
+                    tbodyBelum.innerHTML += `<tr>
+                        <td>${nama} ${warning}</td>
+                        <td>${p.periode}</td>
+                        <td>${p.pemakaian || 0}</td>
+                        <td>Rp ${(p.tarif || 10000).toLocaleString()}</td>
+                        <td>Rp ${p.jumlah.toLocaleString()}</td>
+                        <td><span class="badge bg-danger">Belum Bayar</span></td>
+                        <td><button class="btn btn-success btn-sm" onclick="bukaModalBayar(${p.id})"><i class="fas fa-check"></i> Bayar</button></td>
+                    </tr>`;
+                });
             }
+            document.getElementById('infoTagihanBelum').innerText = getLimitInfo(belum, 'limitTagihanBelum');
 
-            const lunas = appData.payments.filter(p => p.status === 'lunas')
-                .sort((a, b) => (a.tgl_bayar < b.tgl_bayar ? 1 : -1))
-                .slice(0, 5);
-            lunas.forEach(p => {
-                const cust = appData.customers.find(c => c.id === p.customer_id);
-                const nama = cust ? cust.nama : 'Unknown';
-                tbodyRiwayat.innerHTML += `<tr>
-                    <td>${nama}</td><td>${p.periode}</td><td>${p.pemakaian || 0}</td>
-                    <td>Rp ${p.jumlah.toLocaleString()}</td>
-                    <td><span class="badge bg-info">${p.metode || '-'}</span></td>
-                    <td>${p.tgl_bayar || '-'}</td>
-                </tr>`;
-            });
-            if (lunas.length === 0) tbodyRiwayat.innerHTML = '<tr><td colspan="6" class="text-muted">Belum ada pembayaran</td></tr>';
+            // Riwayat
+            const riwayat = appData.payments.filter(p => p.status === 'lunas')
+                .sort((a, b) => (a.tgl_bayar < b.tgl_bayar ? 1 : -1));
+            const limitedRiwayat = applyLimit(riwayat, 'limitRiwayat');
+            tbodyRiwayat.innerHTML = '';
+            if (limitedRiwayat.length === 0) {
+                tbodyRiwayat.innerHTML = '<tr><td colspan="6" class="text-muted">Belum ada pembayaran</td></tr>';
+            } else {
+                limitedRiwayat.forEach(p => {
+                    const cust = appData.customers.find(c => c.id === p.customer_id);
+                    const nama = cust ? cust.nama : 'Unknown';
+                    tbodyRiwayat.innerHTML += `<tr>
+                        <td>${nama}</td><td>${p.periode}</td><td>${p.pemakaian || 0}</td>
+                        <td>Rp ${p.jumlah.toLocaleString()}</td>
+                        <td><span class="badge bg-info">${p.metode || '-'}</span></td>
+                        <td>${p.tgl_bayar || '-'}</td>
+                    </tr>`;
+                });
+            }
+            document.getElementById('infoRiwayat').innerText = getLimitInfo(riwayat, 'limitRiwayat');
+        }
+
+        function applyLimit(arr, limitId) {
+            const el = document.getElementById(limitId);
+            if (!el) return arr;
+            const val = parseInt(el.value);
+            if (val === 999999) return arr;
+            return arr.slice(0, val);
+        }
+
+        function getLimitInfo(arr, limitId) {
+            const el = document.getElementById(limitId);
+            if (!el) return '';
+            const val = parseInt(el.value);
+            const total = arr.length;
+            if (val === 999999) return `Menampilkan semua ${total} data`;
+            const shown = Math.min(val, total);
+            return `Menampilkan ${shown} dari ${total} data`;
         }
 
         // ============================================================
@@ -777,9 +1002,10 @@
         function renderKaryawan() {
             const tbody = document.getElementById('tbodyKaryawan');
             if (!tbody) return;
+            const limited = applyLimit(appData.employees, 'limitKaryawan');
             tbody.innerHTML = '';
             let totalGaji = 0;
-            appData.employees.forEach(k => {
+            limited.forEach(k => {
                 const bersih = k.gaji_pokok + k.tunjangan - k.potongan;
                 totalGaji += bersih;
                 const statusBadge = k.status === 'Lunas' ? '<span class="badge bg-success">Lunas</span>' :
@@ -799,8 +1025,9 @@
                     </td>
                 </tr>`;
             });
+            document.getElementById('infoKaryawan').innerText = getLimitInfo(appData.employees, 'limitKaryawan');
             document.getElementById('totalGajiDisplay').innerHTML =
-                `<i class="fas fa-info-circle text-primary"></i> Total Gaji Periode Ini: <strong>Rp ${totalGaji.toLocaleString()}</strong>`;
+                `<i class="fas fa-info-circle text-primary"></i> Total Gaji Periode Ini (dari data yang ditampilkan): <strong>Rp ${totalGaji.toLocaleString()}</strong>`;
         }
 
         // ============================================================
@@ -810,26 +1037,38 @@
             const tbodyInc = document.getElementById('tbodyIncomeLain');
             const tbodyExp = document.getElementById('tbodyExpenseLain');
             if (!tbodyInc || !tbodyExp) return;
+
+            const incData = appData.otherIncomes;
+            const limitedInc = applyLimit(incData, 'limitIncome');
             tbodyInc.innerHTML = '';
-            appData.otherIncomes.forEach(item => {
-                tbodyInc.innerHTML += `<tr>
-                    <td>${item.tanggal}</td><td>${item.kategori}</td><td>${item.deskripsi}</td>
-                    <td>Rp ${item.jumlah.toLocaleString()}</td>
-                    <td><button class="btn btn-danger btn-sm" onclick="hapusOtherTransaction('income', ${item.id})"><i class="fas fa-trash"></i></button></td>
-                </tr>`;
-            });
-            if (appData.otherIncomes.length === 0) tbodyInc.innerHTML =
-                '<tr><td colspan="5" class="text-muted">Belum ada pemasukan lain.</td></tr>';
+            if (limitedInc.length === 0) {
+                tbodyInc.innerHTML = '<tr><td colspan="5" class="text-muted">Belum ada pemasukan lain.</td></tr>';
+            } else {
+                limitedInc.forEach(item => {
+                    tbodyInc.innerHTML += `<tr>
+                        <td>${item.tanggal}</td><td>${item.kategori}</td><td>${item.deskripsi}</td>
+                        <td>Rp ${item.jumlah.toLocaleString()}</td>
+                        <td><button class="btn btn-danger btn-sm" onclick="hapusOtherTransaction('income', ${item.id})"><i class="fas fa-trash"></i></button></td>
+                    </tr>`;
+                });
+            }
+            document.getElementById('infoIncome').innerText = getLimitInfo(incData, 'limitIncome');
+
+            const expData = appData.otherExpenses;
+            const limitedExp = applyLimit(expData, 'limitExpense');
             tbodyExp.innerHTML = '';
-            appData.otherExpenses.forEach(item => {
-                tbodyExp.innerHTML += `<tr>
-                    <td>${item.tanggal}</td><td>${item.kategori}</td><td>${item.deskripsi}</td>
-                    <td>Rp ${item.jumlah.toLocaleString()}</td>
-                    <td><button class="btn btn-danger btn-sm" onclick="hapusOtherTransaction('expense', ${item.id})"><i class="fas fa-trash"></i></button></td>
-                </tr>`;
-            });
-            if (appData.otherExpenses.length === 0) tbodyExp.innerHTML =
-                '<tr><td colspan="5" class="text-muted">Belum ada pengeluaran lain.</td></tr>';
+            if (limitedExp.length === 0) {
+                tbodyExp.innerHTML = '<tr><td colspan="5" class="text-muted">Belum ada pengeluaran lain.</td></tr>';
+            } else {
+                limitedExp.forEach(item => {
+                    tbodyExp.innerHTML += `<tr>
+                        <td>${item.tanggal}</td><td>${item.kategori}</td><td>${item.deskripsi}</td>
+                        <td>Rp ${item.jumlah.toLocaleString()}</td>
+                        <td><button class="btn btn-danger btn-sm" onclick="hapusOtherTransaction('expense', ${item.id})"><i class="fas fa-trash"></i></button></td>
+                    </tr>`;
+                });
+            }
+            document.getElementById('infoExpense').innerText = getLimitInfo(expData, 'limitExpense');
         }
 
         window.hapusOtherTransaction = async function(type, id) {
@@ -841,7 +1080,7 @@
         };
 
         // ============================================================
-        // DASHBOARD (sama)
+        // DASHBOARD, CHART, LAPORAN (sama seperti sebelumnya)
         // ============================================================
         function renderDashboard() {
             const totalAktif = appData.customers.filter(c => c.status === 'aktif').length;
@@ -863,9 +1102,6 @@
             document.getElementById('statSaldo').innerText = 'Rp ' + saldo.toLocaleString();
         }
 
-        // ============================================================
-        // CHART (sama)
-        // ============================================================
         function renderChart() {
             const container = document.getElementById('chartContainer');
             if (!container) return;
@@ -932,9 +1168,6 @@
             container.innerHTML = svg;
         }
 
-        // ============================================================
-        // LAPORAN KEUANGAN (sama)
-        // ============================================================
         function renderLaporan() {
             const jenis = document.getElementById('filterJenis').value;
             let tglMulai, tglSelesai;
@@ -968,7 +1201,6 @@
             }
 
             const transaksi = [];
-
             appData.payments.filter(p => p.status === 'lunas' && p.tgl_bayar).forEach(p => {
                 const cust = appData.customers.find(c => c.id === p.customer_id);
                 transaksi.push({
@@ -1030,25 +1262,27 @@
             box.className = 'item ' + (saldo >= 0 ? 'positif' : 'negatif');
             document.getElementById('lapJumlahTransaksi').textContent = filtered.length;
 
+            const limited = applyLimit(filtered, 'limitLaporan');
             const tbody = document.getElementById('tbodyLaporan');
             tbody.innerHTML = '';
-            if (filtered.length === 0) {
+            if (limited.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Tidak ada transaksi dalam periode ini.</td></tr>';
-                return;
+            } else {
+                limited.forEach(t => {
+                    tbody.innerHTML += `<tr>
+                        <td>${t.tanggal}</td>
+                        <td>${t.keterangan}</td>
+                        <td>${t.kategori}</td>
+                        <td>${t.pemasukan > 0 ? formatRupiah(t.pemasukan) : '-'}</td>
+                        <td>${t.pengeluaran > 0 ? formatRupiah(t.pengeluaran) : '-'}</td>
+                    </tr>`;
+                });
             }
-            filtered.forEach(t => {
-                tbody.innerHTML += `<tr>
-                    <td>${t.tanggal}</td>
-                    <td>${t.keterangan}</td>
-                    <td>${t.kategori}</td>
-                    <td>${t.pemasukan > 0 ? formatRupiah(t.pemasukan) : '-'}</td>
-                    <td>${t.pengeluaran > 0 ? formatRupiah(t.pengeluaran) : '-'}</td>
-                </tr>`;
-            });
+            document.getElementById('infoLaporan').innerText = getLimitInfo(filtered, 'limitLaporan');
         }
 
         // ============================================================
-        // CRUD PELANGGAN (sama)
+        // CRUD PELANGGAN, KARYAWAN, TAGIHAN, DLL (sama seperti sebelumnya)
         // ============================================================
         function bukaModalPelanggan(id = null) {
             const modal = new bootstrap.Modal(document.getElementById('modalPelanggan'));
@@ -1121,7 +1355,7 @@
         };
 
         // ============================================================
-        // TAGIHAN (dengan meteran awal & akhir)
+        // TAGIHAN (meteran)
         // ============================================================
         function hitungPemakaian() {
             const awal = parseFloat(document.getElementById('inpMeterAwal').value) || 0;
@@ -1147,21 +1381,19 @@
         document.getElementById('inpTagihanPemakaian').addEventListener('input', hitungTotalTagihan);
         document.getElementById('inpTagihanTarif').addEventListener('input', hitungTotalTagihan);
 
-        // Preview gambar
         document.getElementById('inpGambarAwal').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
-            const preview = document.getElementById('previewAwal');
-            preview.innerHTML = `<img src="${URL.createObjectURL(file)}" class="meter-preview" />`;
+            document.getElementById('previewAwal').innerHTML =
+                `<img src="${URL.createObjectURL(file)}" class="meter-preview" />`;
         });
         document.getElementById('inpGambarAkhir').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
-            const preview = document.getElementById('previewAkhir');
-            preview.innerHTML = `<img src="${URL.createObjectURL(file)}" class="meter-preview" />`;
+            document.getElementById('previewAkhir').innerHTML =
+                `<img src="${URL.createObjectURL(file)}" class="meter-preview" />`;
         });
 
-        // Saat modal tambah tagihan dibuka
         document.getElementById('modalTambahTagihan').addEventListener('shown.bs.modal', function() {
             const now = new Date();
             const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -1177,11 +1409,8 @@
             document.getElementById('previewAwal').innerHTML = '';
             document.getElementById('previewAkhir').innerHTML = '';
             populateCustomerDropdown();
-            // Reset state pelanggan terpilih
-            document.getElementById('inpTagihanPelanggan').dataset.prevMeter = '';
         });
 
-        // Saat pelanggan dipilih, cari tagihan terakhir dan isi meteran awal
         document.getElementById('inpTagihanPelanggan').addEventListener('change', function() {
             const customerId = parseInt(this.value);
             if (!customerId) {
@@ -1189,19 +1418,16 @@
                 document.getElementById('previewAwal').innerHTML = '';
                 return;
             }
-            // Cari tagihan terakhir (berdasarkan periode) untuk pelanggan ini
             const allCustomerPayments = appData.payments.filter(p => p.customer_id === customerId);
             if (allCustomerPayments.length === 0) {
                 document.getElementById('inpMeterAwal').value = '';
                 document.getElementById('previewAwal').innerHTML = '';
                 return;
             }
-            // Urutkan berdasarkan periode terbaru
             allCustomerPayments.sort((a, b) => (a.periode < b.periode ? 1 : -1));
             const latest = allCustomerPayments[0];
             if (latest && latest.meter_akhir !== undefined && latest.meter_akhir !== null) {
                 document.getElementById('inpMeterAwal').value = latest.meter_akhir;
-                // Tampilkan gambar akhir bulan lalu sebagai preview awal (jika ada)
                 if (latest.gambar_akhir) {
                     document.getElementById('previewAwal').innerHTML =
                         `<img src="${latest.gambar_akhir}" class="meter-preview" /><br/><small class="text-muted">Gambar akhir ${latest.periode}</small>`;
@@ -1216,7 +1442,6 @@
             hitungPemakaian();
         });
 
-        // Upload image function
         function uploadImage(file, path) {
             return new Promise((resolve, reject) => {
                 const ref = storage.ref(path);
@@ -1228,7 +1453,6 @@
             });
         }
 
-        // Simpan tagihan
         document.getElementById('btnSimpanTagihan').addEventListener('click', async function() {
             const customerId = parseInt(document.getElementById('inpTagihanPelanggan').value);
             const periode = document.getElementById('inpTagihanPeriode').value;
@@ -1286,7 +1510,6 @@
             showToast('Tagihan berhasil ditambahkan!');
             await saveData();
             bootstrap.Modal.getInstance(document.getElementById('modalTambahTagihan')).hide();
-            // Reset form
             document.getElementById('inpTagihanPelanggan').value = '';
             document.getElementById('inpTagihanPeriode').value = '';
             document.getElementById('inpTagihanPemakaian').value = '';
@@ -1301,7 +1524,7 @@
         });
 
         // ============================================================
-        // BAYAR TAGIHAN (sama)
+        // BAYAR TAGIHAN
         // ============================================================
         window.bukaModalBayar = function(paymentId) {
             const p = appData.payments.find(pay => pay.id === paymentId);
@@ -1332,7 +1555,7 @@
         });
 
         // ============================================================
-        // KARYAWAN (sama)
+        // KARYAWAN
         // ============================================================
         function bukaModalKaryawan(id = null) {
             const modal = new bootstrap.Modal(document.getElementById('modalKaryawan'));
@@ -1425,7 +1648,7 @@
         });
 
         // ============================================================
-        // KEUANGAN LAIN (sama)
+        // KEUANGAN LAIN
         // ============================================================
         document.getElementById('btnSimpanIncomeLain').addEventListener('click', async function() {
             const tanggal = document.getElementById('inpIncomeTgl').value;
@@ -1467,7 +1690,7 @@
         });
 
         // ============================================================
-        // AKSES PELANGGAN (sama)
+        // AKSES PELANGGAN
         // ============================================================
         function tampilkanDetailPelangganCustomer(id) {
             const cust = appData.customers.find(c => c.id === id);
@@ -1535,7 +1758,7 @@
         });
 
         // ============================================================
-        // NAVIGASI, SEARCH, INIT
+        // NAVIGASI & EVENT LAINNYA
         // ============================================================
         document.querySelectorAll('.sidebar .nav-link[data-page]').forEach(link => {
             link.addEventListener('click', function(e) {
@@ -1572,10 +1795,15 @@
             });
         });
 
-        document.getElementById('searchPelanggan').addEventListener('input', renderPelanggan);
-        document.getElementById('btnClearSearch').addEventListener('click', function() {
-            document.getElementById('searchPelanggan').value = '';
-            renderPelanggan();
+        // Event listener untuk semua dropdown limit (selain pelanggan, sudah ditangani sendiri)
+        document.querySelectorAll('select[id^="limit"]:not(#limitPelanggan)').forEach(sel => {
+            sel.addEventListener('change', function() {
+                const id = this.id;
+                if (id === 'limitTagihanBelum' || id === 'limitRiwayat') renderTagihan();
+                else if (id === 'limitKaryawan') renderKaryawan();
+                else if (id === 'limitIncome' || id === 'limitExpense') renderOtherTransactions();
+                else if (id === 'limitLaporan') renderLaporan();
+            });
         });
 
         document.getElementById('filterJenis').addEventListener('change', function() {
